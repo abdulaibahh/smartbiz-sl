@@ -5,7 +5,111 @@ const sub = require("../middlewares/subscription");
 const { generateReceiptPDF } = require("../utils/receipt");
 const { sendReceiptEmail } = require("../utils/email");
 
-/* ================= QUICK SALE ================= */
+/* ================= NEW SALE (with items) ================= */
+
+router.post("/sale", auth, sub, async (req, res) => {
+  try {
+    const { items, paid, customer, customerId, sendEmail, customerEmail } = req.body;
+
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ message: "At least one item is required" });
+    }
+
+    // Calculate total from items
+    let totalAmount = 0;
+    const saleItems = [];
+    
+    for (const item of items) {
+      const { productId, product, quantity, unitPrice } = item;
+      const qty = parseInt(quantity) || 1;
+      const price = parseFloat(unitPrice) || 0;
+      const itemTotal = qty * price;
+      totalAmount += itemTotal;
+      
+      saleItems.push({
+        productId,
+        product,
+        quantity: qty,
+        unitPrice: price,
+        total: itemTotal
+      });
+    }
+
+    const paidAmount = parseFloat(paid) || 0;
+    const debt = Math.max(0, totalAmount - paidAmount);
+    const customerName = customer || "Walk-in Customer";
+
+    // Insert sale
+    const sale = await db.query(
+      "INSERT INTO sales(business_id, total, paid, customer) VALUES($1, $2, $3, $4) RETURNING id, created_at",
+      [req.user.business_id, totalAmount, paidAmount, customerName]
+    );
+
+    const saleId = sale.rows[0].id;
+    const saleCreatedAt = sale.rows[0].created_at;
+
+    // Insert sale items
+    for (const item of saleItems) {
+      await db.query(
+        "INSERT INTO sales_items(sale_id, product_id, product_name, quantity, unit_price, total) VALUES($1, $2, $3, $4, $5, $6)",
+        [saleId, item.productId || null, item.product, item.quantity, item.unitPrice, item.total]
+      );
+    }
+
+    // Update inventory quantities
+    for (const item of saleItems) {
+      if (item.productId) {
+        await db.query(
+          "UPDATE inventory SET quantity = quantity - $1 WHERE id = $2 AND business_id = $3",
+          [item.quantity, item.productId, req.user.business_id]
+        );
+      }
+    }
+
+    // If there's debt, create debt record
+    if (debt > 0) {
+      await db.query(
+        "INSERT INTO debts(business_id, customer, amount) VALUES($1, $2, $3)",
+        [req.user.business_id, customerName, debt]
+      );
+    }
+
+    // Generate PDF receipt
+    let pdfBase64 = null;
+    try {
+      const pdfBuffer = await generateReceiptPDF(saleId, req.user.business_id);
+      pdfBase64 = pdfBuffer.toString("base64");
+
+      if (sendEmail && customerEmail) {
+        const businessResult = await db.query(
+          "SELECT name, shop_name FROM businesses WHERE id = $1",
+          [req.user.business_id]
+        );
+        const business = businessResult.rows[0] || {};
+
+        await sendReceiptEmail(customerEmail, pdfBuffer, {
+          receiptNumber: saleId,
+          total: totalAmount.toLocaleString(),
+          paid: paidAmount.toLocaleString(),
+          businessName: business.shop_name || business.name
+        });
+      }
+    } catch (pdfErr) {
+      console.error("PDF generation error:", pdfErr.message);
+    }
+
+    res.json({ 
+      message: "Sale recorded", 
+      saleId,
+      receipt: pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null
+    });
+  } catch (err) {
+    console.error("Sale error:", err);
+    res.status(500).json({ message: "Failed to record sale" });
+  }
+});
+
+/* ================= QUICK SALE (legacy) ================= */
 
 router.post("/quick", auth, sub, async (req, res) => {
   try {

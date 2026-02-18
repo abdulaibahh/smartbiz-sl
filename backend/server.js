@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -10,6 +11,9 @@ const PORT = process.env.PORT || 5000;
 /* SECURITY */
 app.use(helmet());
 app.use(cors());
+
+/* Static files for uploads */
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.use(rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -32,6 +36,7 @@ app.use("/api/inventory", require("./src/routes/inventory.routes"));
 app.use("/api/debt", require("./src/routes/debt.routes"));
 app.use("/api/ai", require("./src/routes/ai.routes"));
 app.use("/api/platform", require("./src/routes/platform.routes"));
+app.use("/api/customers", require("./src/routes/customer.routes"));
 
 /* ERROR HANDLER */
 app.use((err, req, res, next) => {

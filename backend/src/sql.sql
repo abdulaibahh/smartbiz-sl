@@ -46,7 +46,36 @@ CREATE TABLE inventory (
   id SERIAL PRIMARY KEY,
   business_id INTEGER REFERENCES businesses(id),
   product TEXT,
-  quantity INTEGER
+  quantity INTEGER,
+  cost_price NUMERIC DEFAULT 0,
+  selling_price NUMERIC DEFAULT 0,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Customers table
+CREATE TABLE customers (
+  id SERIAL PRIMARY KEY,
+  business_id INTEGER REFERENCES businesses(id),
+  name TEXT NOT NULL,
+  email TEXT,
+  phone TEXT,
+  address TEXT,
+  notes TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Sales items table for detailed tracking
+CREATE TABLE sales_items (
+  id SERIAL PRIMARY KEY,
+  sale_id INTEGER REFERENCES sales(id),
+  product_id INTEGER REFERENCES inventory(id),
+  product_name TEXT,
+  quantity INTEGER,
+  unit_price NUMERIC,
+  total NUMERIC,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE platform_admins (

@@ -1,10 +1,10 @@
-// Currency utility for Sierra Leone Leones (NLE)
+// Currency utility for Sierra Leone New Leones (NLE)
 export const formatCurrency = (value) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'SLL', // Sierra Leone Leones
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
+    currency: 'SLE', // Sierra Leone New Leones (NLE)
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(value || 0);
 };
 
@@ -12,7 +12,7 @@ export const formatCurrency = (value) => {
 export const formatCurrencyPrecise = (value) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'SLL',
+    currency: 'SLE',
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value || 0);
@@ -27,9 +27,9 @@ export const formatCurrencyShort = (value) => {
   if (num >= 1000) {
     return (num / 1000).toFixed(1) + 'K';
   }
-  return num.toString();
+  return num.toFixed(2);
 };
 
 // Currency symbol
-export const CURRENCY_SYMBOL = 'Le ';
-export const CURRENCY_NAME = 'Sierra Leone Leones';
+export const CURRENCY_SYMBOL = 'NLE ';
+export const CURRENCY_NAME = 'Sierra Leone New Leones';

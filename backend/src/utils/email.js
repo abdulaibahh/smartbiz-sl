@@ -32,7 +32,7 @@ async function sendReceiptEmail(to, pdfBuffer, saleDetails) {
       from: process.env.SMTP_FROM || "noreply@smartbiz.sl",
       to,
       subject: `Receipt from ${saleDetails.businessName || "SmartBiz"} - #${saleDetails.receiptNumber}`,
-      text: `Thank you for your purchase!\n\nReceipt #: ${saleDetails.receiptNumber}\nTotal: Le ${saleDetails.total}\nPaid: Le ${saleDetails.paid}\n\nPowered by SmartBiz-SL`,
+      text: `Thank you for your purchase!\n\nReceipt #: ${saleDetails.receiptNumber}\nTotal: NLE ${saleDetails.total}\nPaid: NLE ${saleDetails.paid}\n\nPowered by SmartBiz-SL`,
       attachments: [
         {
           filename: `receipt-${saleDetails.receiptNumber}.pdf`,

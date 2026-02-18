@@ -19,7 +19,7 @@ router.get("/all", auth, async (req, res) => {
 
 // Supplier order - add stock
 router.post("/supplier-order", auth, sub, async (req, res) => {
-  const { product, quantity } = req.body;
+  const { product, quantity, cost_price, selling_price } = req.body;
 
   if (!product || !quantity) {
     return res.status(400).json({ message: "Product and quantity required" });
@@ -32,14 +32,31 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
     );
 
     if (existing.rows.length) {
+      // Update existing product - keep original prices unless explicitly provided
+      const updates = ["quantity = quantity + $1", "updated_at = NOW()"];
+      const params = [quantity];
+      let paramIndex = 2;
+      
+      if (cost_price !== undefined) {
+        updates.push(`cost_price = ${paramIndex++}`);
+        params.push(cost_price);
+      }
+      if (selling_price !== undefined) {
+        updates.push(`selling_price = ${paramIndex++}`);
+        params.push(selling_price);
+      }
+      
+      params.push(req.user.business_id, product);
+      
       await db.query(
-        "UPDATE inventory SET quantity=quantity+$1 WHERE business_id=$2 AND product=$3",
-        [quantity, req.user.business_id, product]
+        `UPDATE inventory SET ${updates.join(", ")} WHERE business_id=${paramIndex} AND product=${paramIndex + 1}`,
+        params
       );
     } else {
+      // Insert new product with prices
       await db.query(
-        "INSERT INTO inventory(business_id,product,quantity) VALUES($1,$2,$3)",
-        [req.user.business_id, product, quantity]
+        "INSERT INTO inventory(business_id, product, quantity, cost_price, selling_price, updated_at) VALUES($1, $2, $3, $4, $5, NOW())",
+        [req.user.business_id, product, quantity, cost_price || 0, selling_price || 0]
       );
     }
 
@@ -50,16 +67,39 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
   }
 });
 
-// Update inventory quantity
+// Update inventory quantity and prices
 router.put("/:id", auth, async (req, res) => {
   const { id } = req.params;
-  const { quantity } = req.body;
+  const { quantity, cost_price, selling_price } = req.body;
 
   try {
-    await db.query(
-      "UPDATE inventory SET quantity=$1 WHERE id=$2 AND business_id=$3",
-      [quantity, id, req.user.business_id]
-    );
+    const updates = [];
+    const params = [];
+    let paramIndex = 1;
+
+    if (quantity !== undefined) {
+      updates.push(`quantity = ${paramIndex++}`);
+      params.push(quantity);
+    }
+    if (cost_price !== undefined) {
+      updates.push(`cost_price = ${paramIndex++}`);
+      params.push(cost_price);
+    }
+    if (selling_price !== undefined) {
+      updates.push(`selling_price = ${paramIndex++}`);
+      params.push(selling_price);
+    }
+    
+    updates.push("updated_at = NOW()");
+    params.push(id, req.user.business_id);
+
+    if (updates.length > 1) {
+      await db.query(
+        `UPDATE inventory SET ${updates.join(", ")} WHERE id = ${paramIndex} AND business_id = ${paramIndex + 1}`,
+        params
+      );
+    }
+    
     res.json({ message: "Inventory updated" });
   } catch (err) {
     console.error(err);

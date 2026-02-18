@@ -1,29 +1,96 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
-import { useAuth } from "@/providers/AuthContext";
+import { businessAPI } from "@/services/api";
 import toast from "react-hot-toast";
-import { Settings, User, Building2, Mail, Save, Loader2 } from "lucide-react";
+import { Settings, User, Building2, Mail, Save, Loader2, Upload, Image } from "lucide-react";
 
 function SettingsContent() {
-  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [form, setForm] = useState({
-    name: "",
-    email: "",
-    business_name: ""
+    shop_name: "",
+    address: "",
+    phone: "",
+    logo_url: ""
   });
+  const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    loadBusiness();
+  }, []);
+
+  const loadBusiness = async () => {
+    try {
+      const res = await businessAPI.get();
+      if (res.data) {
+        setForm({
+          shop_name: res.data.shop_name || "",
+          address: res.data.address || "",
+          phone: res.data.phone || "",
+          logo_url: res.data.logo_url || ""
+        });
+      }
+    } catch (error) {
+      console.error("Error loading business:", error);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     
-    // Simulate save
-    setTimeout(() => {
+    try {
+      await businessAPI.update(form);
       toast.success("Settings saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save settings");
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("Image too large. Max 2MB");
+      return;
+    }
+
+    setUploading(true);
+    
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64 = reader.result;
+        try {
+          const res = await businessAPI.uploadLogo(base64);
+          if (res.data?.logo_url) {
+            setForm(prev => ({ ...prev, logo_url: res.data.logo_url }));
+            toast.success("Logo uploaded successfully!");
+          }
+        } catch (error) {
+          toast.error("Failed to upload logo");
+        } finally {
+          setUploading(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (error) {
+      toast.error("Failed to upload logo");
+      setUploading(false);
+    }
   };
 
   return (
@@ -39,53 +106,100 @@ function SettingsContent() {
           </div>
         </div>
 
+        {/* Logo Upload */}
+        <div className="mb-6">
+          <label className="block text-sm font-medium text-zinc-400 mb-2">Business Logo</label>
+          <div className="flex items-center gap-4">
+            <div className="w-24 h-24 rounded-xl bg-zinc-800 border border-zinc-700 flex items-center justify-center overflow-hidden">
+              {form.logo_url ? (
+                <img 
+                  src={form.logo_url} 
+                  alt="Logo" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.target.style.display = 'none';
+                    e.target.nextSibling.style.display = 'flex';
+                  }}
+                />
+              ) : null}
+              <div className={form.logo_url ? "hidden" : "flex flex-col items-center text-zinc-500"}>
+                <Image size={24} />
+                <span className="text-xs mt-1">No logo</span>
+              </div>
+            </div>
+            <div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleLogoUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-zinc-800 text-white hover:bg-zinc-700 transition-colors disabled:opacity-50"
+              >
+                {uploading ? (
+                  <Loader2 size={18} className="animate-spin" />
+                ) : (
+                  <Upload size={18} />
+                )}
+                {uploading ? "Uploading..." : "Upload Logo"}
+              </button>
+              <p className="text-xs text-zinc-500 mt-2">PNG, JPG up to 2MB</p>
+            </div>
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-5">
           {/* Business Name */}
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">
-              Business Name
+              Shop / Business Name
             </label>
             <div className="relative">
               <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
               <input
                 type="text"
                 placeholder="My Business"
-                value={form.business_name}
-                onChange={(e) => setForm({ ...form, business_name: e.target.value })}
+                value={form.shop_name}
+                onChange={(e) => setForm({ ...form, shop_name: e.target.value })}
                 className="w-full pl-12 pr-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
               />
             </div>
           </div>
 
-          {/* Your Name */}
+          {/* Address */}
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">
-              Your Name
+              Address
             </label>
             <div className="relative">
-              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
-              <input
-                type="text"
-                placeholder="John Doe"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                className="w-full pl-12 pr-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+              <Building2 className="absolute left-4 top-4 text-zinc-500" size={20} />
+              <textarea
+                placeholder="Street address, city..."
+                value={form.address}
+                onChange={(e) => setForm({ ...form, address: e.target.value })}
+                rows={2}
+                className="w-full pl-12 pr-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 resize-none"
               />
             </div>
           </div>
 
-          {/* Email */}
+          {/* Phone */}
           <div>
             <label className="block text-sm font-medium text-zinc-400 mb-2">
-              Email Address
+              Phone Number
             </label>
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
               <input
-                type="email"
-                placeholder="you@example.com"
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                type="tel"
+                placeholder="+232 76 123 456"
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 className="w-full pl-12 pr-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
               />
             </div>
@@ -109,25 +223,6 @@ function SettingsContent() {
             )}
           </button>
         </form>
-      </div>
-
-      {/* Account Info */}
-      <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-white mb-4">Account Information</h2>
-        <div className="space-y-3">
-          <div className="flex justify-between py-2 border-b border-zinc-800">
-            <span className="text-zinc-500">Role</span>
-            <span className="text-white capitalize">{user?.role?.replace("_", " ") || "Owner"}</span>
-          </div>
-          <div className="flex justify-between py-2 border-b border-zinc-800">
-            <span className="text-zinc-500">User ID</span>
-            <span className="text-white font-mono text-sm">{user?.id || "—"}</span>
-          </div>
-          <div className="flex justify-between py-2">
-            <span className="text-zinc-500">Business ID</span>
-            <span className="text-white font-mono text-sm">{user?.business_id || "—"}</span>
-          </div>
-        </div>
       </div>
     </div>
   );

@@ -46,11 +46,13 @@ export const authAPI = {
 export const businessAPI = {
   get: () => API.get("/api/business"),
   update: (data) => API.put("/api/business", data),
+  uploadLogo: (logo) => API.post("/api/business/logo", { logo }),
 };
 
 // ==================== SALES ====================
 export const salesAPI = {
   quickSale: (data) => API.post("/api/sales/quick", data),
+  createSale: (data) => API.post("/api/sales/sale", data),
   getAll: () => API.get("/api/sales/all"),
   getReceipt: (id) => API.get(`/api/sales/receipt/${id}`, { responseType: 'blob' }),
 };
@@ -59,8 +61,18 @@ export const salesAPI = {
 export const inventoryAPI = {
   supplierOrder: (data) => API.post("/api/inventory/supplier-order", data),
   getAll: () => API.get("/api/inventory/all"),
-  updateQuantity: (id, quantity) => API.put(`/api/inventory/${id}`, { quantity }),
+  updateQuantity: (id, data) => API.put(`/api/inventory/${id}`, typeof data === 'number' ? { quantity: data } : data),
   deleteItem: (id) => API.delete(`/api/inventory/${id}`),
+};
+
+// ==================== CUSTOMERS ====================
+export const customerAPI = {
+  getAll: () => API.get("/api/customers/all"),
+  getById: (id) => API.get(`/api/customers/${id}`),
+  create: (data) => API.post("/api/customers", data),
+  update: (id, data) => API.put(`/api/customers/${id}`, data),
+  delete: (id) => API.delete(`/api/customers/${id}`),
+  getHistory: (id) => API.get(`/api/customers/${id}/history`),
 };
 
 // ==================== DEBT ====================

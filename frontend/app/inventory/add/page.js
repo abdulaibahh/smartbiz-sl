@@ -5,14 +5,16 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { inventoryAPI } from "@/services/api";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { Package, Loader2, Truck } from "lucide-react";
+import { Package, Loader2, Truck, DollarSign } from "lucide-react";
 
 function AddStockContent() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     product: "",
-    quantity: ""
+    quantity: "",
+    cost_price: "",
+    selling_price: ""
   });
 
   const handleSubmit = async (e) => {
@@ -22,11 +24,13 @@ function AddStockContent() {
     try {
       await inventoryAPI.supplierOrder({
         product: form.product,
-        quantity: parseInt(form.quantity) || 1
+        quantity: parseInt(form.quantity) || 1,
+        cost_price: parseFloat(form.cost_price) || 0,
+        selling_price: parseFloat(form.selling_price) || 0
       });
 
       toast.success("Stock added successfully!");
-      setForm({ product: "", quantity: "" });
+      setForm({ product: "", quantity: "", cost_price: "", selling_price: "" });
       
       setTimeout(() => {
         router.push("/inventory");
@@ -78,13 +82,64 @@ function AddStockContent() {
             <input
               type="number"
               min="1"
-              placeholder="Enter quantity"
+              placeholder="0"
               value={form.quantity}
               onChange={(e) => setForm({ ...form, quantity: e.target.value })}
               required
               className="w-full px-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all text-lg"
             />
           </div>
+
+          {/* Cost Price and Selling Price */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                Cost Price (NLE)
+              </label>
+              <div className="relative">
+                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={form.cost_price}
+                  onChange={(e) => setForm({ ...form, cost_price: e.target.value })}
+                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">
+                Selling Price (NLE) *
+              </label>
+              <div className="relative">
+                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={form.selling_price}
+                  onChange={(e) => setForm({ ...form, selling_price: e.target.value })}
+                  required
+                  className="w-full pl-12 pr-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500 transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Profit Preview */}
+          {form.cost_price && form.selling_price && (
+            <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+              <div className="flex items-center justify-between">
+                <span className="text-emerald-400 text-sm">Profit per unit:</span>
+                <span className="text-emerald-400 font-bold">
+                  NLE {(parseFloat(form.selling_price) - parseFloat(form.cost_price)).toFixed(2)}
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Info Box */}
           <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">

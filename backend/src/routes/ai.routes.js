@@ -123,10 +123,10 @@ router.get("/summary", auth, async (req, res) => {
     if (openaiInstance) {
       const aiPrompt = `
 Based on this business data for the past ${period}:
-- Revenue: Le ${currentRevenue} (${revenueChange}% change from previous period)
+- Revenue: NLE ${currentRevenue} (${revenueChange}% change from previous period)
 - Transactions: ${salesResult.rows[0].transaction_count}
-- Average Transaction: Le ${parseFloat(salesResult.rows[0].avg_transaction).toFixed(2)}
-- Total Debts: Le ${debtResult.rows[0].total_debt}
+- Average Transaction: NLE ${parseFloat(salesResult.rows[0].avg_transaction).toFixed(2)}
+- Total Debts: NLE ${debtResult.rows[0].total_debt}
 - Inventory Items: ${inventoryResult.rows[0].total_items}
 
 Write a concise 2-3 paragraph business summary in plain English. Mention:
@@ -163,16 +163,16 @@ function generateBasicSummary(data) {
   const { revenue, transactions, debts } = data;
   let summary = "";
   
-  summary += `📊 This ${data.period}, your business made Le ${revenue.total.toLocaleString()} in revenue.`;
+  summary += `📊 This ${data.period}, your business made NLE ${revenue.total.toLocaleString()} in revenue.`;
   
   if (revenue.change != 0) {
     summary += ` That's ${Math.abs(revenue.change)}% ${revenue.isPositive ? 'more' : 'less'} than the previous ${data.period}.`;
   }
   
-  summary += ` You had ${transactions.count} transactions, averaging Le ${transactions.avgValue.toFixed(0)} per sale.`;
+  summary += ` You had ${transactions.count} transactions, averaging NLE ${transactions.avgValue.toFixed(0)} per sale.`;
   
   if (debts.total > 0) {
-    summary += ` ⚠️ You have Le ${debts.total.toLocaleString()} in outstanding debts.`;
+    summary += ` ⚠️ You have NLE ${debts.total.toLocaleString()} in outstanding debts.`;
   }
   
   return summary;
@@ -258,7 +258,7 @@ router.get("/insights", auth, async (req, res) => {
           type: "best-day",
           severity: "success",
           title: "Best Sales Day",
-          message: `${bestDay.rows[0].day.trim()} is your best day with Le ${parseFloat(bestDay.rows[0].revenue).toLocaleString()} in revenue.`,
+          message: `${bestDay.rows[0].day.trim()} is your best day with NLE ${parseFloat(bestDay.rows[0].revenue).toLocaleString()} in revenue.`,
           data: bestDay.rows[0]
         });
       }
@@ -365,16 +365,16 @@ router.get("/ask", auth, async (req, res) => {
 
     // Revenue questions
     if (questionLower.includes("revenue") || questionLower.includes("sales") || questionLower.includes("money")) {
-      dataAnswer += `💰 Total Revenue: Le ${parseFloat(sales.total_revenue).toLocaleString()}\n`;
+      dataAnswer += `💰 Total Revenue: NLE ${parseFloat(sales.total_revenue).toLocaleString()}\n`;
       dataAnswer += `📊 Total Transactions: ${sales.transaction_count}\n`;
       if (sales.transaction_count > 0) {
-        dataAnswer += `📈 Average Sale: Le ${(parseFloat(sales.total_revenue) / sales.transaction_count).toFixed(0)}\n`;
+        dataAnswer += `📈 Average Sale: NLE ${(parseFloat(sales.total_revenue) / sales.transaction_count).toFixed(0)}\n`;
       }
     }
 
     // Debt questions
     if (questionLower.includes("debt") || questionLower.includes("credit") || questionLower.includes("unpaid")) {
-      dataAnswer += `⚠️ Total Outstanding Debt: Le ${parseFloat(debts.total_debt).toLocaleString()}\n`;
+      dataAnswer += `⚠️ Total Outstanding Debt: NLE ${parseFloat(debts.total_debt).toLocaleString()}\n`;
     }
 
     // Inventory questions
@@ -402,7 +402,7 @@ router.get("/ask", auth, async (req, res) => {
       if (topCustomers.length > 0) {
         dataAnswer += `\n🏆 Top Customers:\n`;
         topCustomers.forEach(([name, stats], i) => {
-          dataAnswer += `${i + 1}. ${name}: Le ${stats.total.toLocaleString()} (${stats.count} visits)\n`;
+          dataAnswer += `${i + 1}. ${name}: NLE ${stats.total.toLocaleString()} (${stats.count} visits)\n`;
         });
       }
     }
@@ -424,9 +424,9 @@ router.get("/ask", auth, async (req, res) => {
 You are a helpful business assistant. The user is asking about their business.
 
 Business Data:
-- Revenue: Le ${parseFloat(sales.total_revenue).toLocaleString()}
+- Revenue: NLE ${parseFloat(sales.total_revenue).toLocaleString()}
 - Transactions: ${sales.transaction_count}
-- Outstanding Debts: Le ${parseFloat(debts.total_debt).toLocaleString()}
+- Outstanding Debts: NLE ${parseFloat(debts.total_debt).toLocaleString()}
 - Inventory: ${inventory.items} products, ${inventory.total_stock} total units
 - Last Sale: ${sales.last_sale || "No sales yet"}
 
@@ -448,9 +448,26 @@ Instructions:
     res.json({ answer: completion.choices[0].message.content });
   } catch (err) {
     console.error("AI ask error:", err);
-    res.json({ 
-      answer: "Sorry, I encountered an error. Please try again later." 
-    });
+    
+    // Return a more helpful error message
+    const business_id = req.user.business_id;
+    
+    // Try to get basic data for fallback response
+    try {
+      const [salesData, debtData, inventoryData] = await Promise.all([
+        db.query(`SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE business_id=$1`, [business_id]),
+        db.query(`SELECT COALESCE(SUM(amount), 0) as total FROM debts WHERE business_id=$1`, [business_id]),
+        db.query(`SELECT COUNT(*) as items, COALESCE(SUM(quantity), 0) as stock FROM inventory WHERE business_id=$1`, [business_id])
+      ]);
+      
+      const fallbackAnswer = `I apologize, but I'm having trouble processing your request right now due to a technical issue.\n\nHowever, here's your business summary:\n- Revenue: NLE ${parseFloat(salesData.rows[0].total).toLocaleString()}\n- Transactions: ${salesData.rows[0].count}\n- Outstanding Debts: NLE ${parseFloat(debtData.rows[0].total).toLocaleString()}\n- Inventory: ${inventoryData.rows[0].items} products (${inventoryData.rows[0].stock} units)\n\nPlease try again in a few moments.`;
+      
+      return res.json({ answer: fallbackAnswer });
+    } catch (fallbackErr) {
+      return res.json({ 
+        answer: "I apologize, but I encountered an error while processing your request. Please try again later." 
+      });
+    }
   }
 });
 
