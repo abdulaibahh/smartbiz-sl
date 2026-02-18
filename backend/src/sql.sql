@@ -15,6 +15,7 @@ CREATE TABLE businesses (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 CREATE TABLE users (
   id SERIAL PRIMARY KEY,
   name TEXT,
@@ -29,6 +30,7 @@ CREATE TABLE users (
 );
 
 -- Password reset tokens table
+
 CREATE TABLE password_reset_tokens (
   id SERIAL PRIMARY KEY,
   user_id INTEGER REFERENCES users(id),
@@ -37,6 +39,7 @@ CREATE TABLE password_reset_tokens (
   used BOOLEAN DEFAULT false,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 CREATE TABLE sales (
   id SERIAL PRIMARY KEY,
@@ -54,12 +57,14 @@ CREATE TABLE sales (
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 CREATE TABLE subscriptions (
   id SERIAL PRIMARY KEY,
   business_id INTEGER REFERENCES businesses(id),
   active BOOLEAN DEFAULT true,
   end_date TIMESTAMP
 );
+
 
 CREATE TABLE debts (
   id SERIAL PRIMARY KEY,
@@ -68,6 +73,7 @@ CREATE TABLE debts (
   amount NUMERIC,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
 
 CREATE TABLE inventory (
   id SERIAL PRIMARY KEY,
@@ -81,6 +87,7 @@ CREATE TABLE inventory (
 );
 
 -- Customers table
+
 CREATE TABLE customers (
   id SERIAL PRIMARY KEY,
   business_id INTEGER REFERENCES businesses(id),
@@ -94,6 +101,7 @@ CREATE TABLE customers (
 );
 
 -- Sales items table for detailed tracking
+
 CREATE TABLE sales_items (
   id SERIAL PRIMARY KEY,
   sale_id INTEGER REFERENCES sales(id),
@@ -105,6 +113,7 @@ CREATE TABLE sales_items (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+
 CREATE TABLE platform_admins (
   id SERIAL PRIMARY KEY,
   email TEXT UNIQUE,
@@ -113,11 +122,13 @@ CREATE TABLE platform_admins (
 
 SELECT COUNT(*) FROM businesses WHERE subscription_active=true;
 
+
 CREATE TABLE stripe_events (
   id SERIAL PRIMARY KEY,
   event_id TEXT UNIQUE,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
 
 CREATE TABLE subscription_payments (
   id SERIAL PRIMARY KEY,
@@ -131,6 +142,7 @@ CREATE TABLE subscription_payments (
 );
 
 -- Orders from suppliers table
+
 CREATE TABLE orders (
   id SERIAL PRIMARY KEY,
   business_id INTEGER REFERENCES businesses(id),
@@ -146,6 +158,7 @@ CREATE TABLE orders (
 );
 
 -- Order items table
+
 CREATE TABLE order_items (
   id SERIAL PRIMARY KEY,
   order_id INTEGER REFERENCES orders(id) ON DELETE CASCADE,
@@ -159,6 +172,7 @@ CREATE TABLE order_items (
 );
 
 -- Supplier payments table
+
 CREATE TABLE supplier_payments (
   id SERIAL PRIMARY KEY,
   business_id INTEGER REFERENCES businesses(id),
@@ -172,6 +186,7 @@ CREATE TABLE supplier_payments (
 );
 
 -- Update debts table to include customer_id
+
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS customer_id INTEGER REFERENCES customers(id);
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS sale_id INTEGER REFERENCES sales(id);
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS payment_amount NUMERIC DEFAULT 0;
