@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { salesAPI } from "@/services/api";
 import { Users, Search, ShoppingCart, DollarSign } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 function CustomersContent() {
   const [sales, setSales] = useState([]);
@@ -53,9 +54,6 @@ function CustomersContent() {
     const lower = search.toLowerCase();
     return customers.filter(c => c.name.toLowerCase().includes(lower));
   }, [customers, search]);
-
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
 
   const formatDate = (date) => 
     new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });

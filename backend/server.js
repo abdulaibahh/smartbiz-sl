@@ -26,6 +26,7 @@ app.use(express.json());
 app.get("/", (req, res) => res.send("🚀 SmartBiz API running"));
 
 app.use("/api/auth", require("./src/routes/auth.routes"));
+app.use("/api/business", require("./src/routes/business.routes"));
 app.use("/api/sales", require("./src/routes/sales.routes"));
 app.use("/api/inventory", require("./src/routes/inventory.routes"));
 app.use("/api/debt", require("./src/routes/debt.routes"));

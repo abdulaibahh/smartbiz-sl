@@ -1,0 +1,43 @@
+ "I want you to build for me a business tracking system that will automatically handle daily business activities like tracking customers debt, auto checks balances etc.  I want the application to prompt users to register/create their account first (signup) and then login to the system. Business owners can have access to add business name, details, address and logo that will show on transaction receipt and also add users to their individual business. A quick sale button to the dashboard that will take you to the quick sale form. Also, at the quick sale form, add a button to directly add/register new customers. The system currency should be the be the new Leones (NLE); not that old SLL. Also, Customize Admin → Business Settings → Your shop name (appears on PDF) and Multi-user (groups: Cashier limited). Also, the system should automatically send the pdf receipt to customers after successful transactions. But only business owners can create login credentials for other users. Also, let there be a feature that enable business owners to track debt, orders, payment they made to other business. Whenever they order Items from other businesses, the Qty in stock in their own business should immediately increase for the particular Item ordered. Also, for the monetization aspect, users should only use the system free for one month as a trial. After one-month free trial, they should subscribe 10\$/month to continue using it. The system should provide two means of subscription; 1. They should either directly send their money to my Orange Money number (+23275756395) or 2. They should use their credit/debit card to send to my bank account (540120520391143). Then last feature is to turn SmartBiz-SL from a normal business system into an AI business assistant that SMEs pay for monthly.
+Think:
+“I don’t understand numbers → AI explains my business.”
+PHASE 1️⃣: Add AI value that feels like magic ✨
+No complex ML. Just smart use of LLMs.
+✅ Feature 1: AI Business Summary (MUST-HAVE)
+What it does
+
+
+Summarizes sales, revenue, best products, weak products
+Written in plain English
+
+
+Example
+“Last week, revenue increased by 12%. Product A sold the most. Tuesdays had the lowest sales.”
+Why it sells
+
+
+Business owners hate dashboards
+They LOVE explanations
+
+
+✅ Feature 2: Ask-Your-Business (Natural Language)
+User types
+“What were my top 3 products last month?”
+“Why did sales drop yesterday?”
+Behind the scenes
+
+
+You convert question → SQL
+Run query
+Feed result to AI
+Return explanation
+
+
+PHASE 2: AI insights that save money 📉
+✅ Feature 3: Sales & Inventory Insights
+AI answers:
+
+
+“Which products may run out soon?”
+“Which products are not selling?”
+“Which day is best for sales?”  Businesses don’t need perfect AI.  They need useful AI. Create the system with me completely from scratch (step-by-step). This should work for both small shops, wholesale and service business. I want both credit sales and cash-only + credit. Also, add more features to the system so it will really standout. I am building "SmartBiz-SL" as a real commercial product. let me be clear to you that this is not a school or toy project, rather it's something i want to build on my own from start to finish and possibly make money from it". And I have already built and deployed both frontend and backend, I just want Blackbox ai to adjust and finalize it strictly following this prompt I gave without breaking my deploy.

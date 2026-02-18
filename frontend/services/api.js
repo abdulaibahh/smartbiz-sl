@@ -37,18 +37,30 @@ API.interceptors.response.use(
 export const authAPI = {
   login: (credentials) => API.post("/api/auth/login", credentials),
   register: (data) => API.post("/api/auth/register", data),
+  getUsers: () => API.get("/api/auth/users"),
+  createUser: (data) => API.post("/api/auth/users", data),
+  deleteUser: (id) => API.delete(`/api/auth/users/${id}`),
+};
+
+// ==================== BUSINESS ====================
+export const businessAPI = {
+  get: () => API.get("/api/business"),
+  update: (data) => API.put("/api/business", data),
 };
 
 // ==================== SALES ====================
 export const salesAPI = {
   quickSale: (data) => API.post("/api/sales/quick", data),
   getAll: () => API.get("/api/sales/all"),
+  getReceipt: (id) => API.get(`/api/sales/receipt/${id}`, { responseType: 'blob' }),
 };
 
 // ==================== INVENTORY ====================
 export const inventoryAPI = {
   supplierOrder: (data) => API.post("/api/inventory/supplier-order", data),
   getAll: () => API.get("/api/inventory/all"),
+  updateQuantity: (id, quantity) => API.put(`/api/inventory/${id}`, { quantity }),
+  deleteItem: (id) => API.delete(`/api/inventory/${id}`),
 };
 
 // ==================== DEBT ====================
@@ -59,6 +71,8 @@ export const debtAPI = {
 // ==================== AI ====================
 export const aiAPI = {
   ask: (question) => API.get("/api/ai/ask", { params: { question } }),
+  getSummary: () => API.get("/api/ai/summary"),
+  getInsights: (type) => API.get("/api/ai/insights", { params: { type } }),
 };
 
 // ==================== PLATFORM ====================
@@ -73,11 +87,13 @@ export const platformAPI = {
 export const subscriptionAPI = {
   getStatus: () => API.get("/api/subscription/status"),
   createCheckout: (plan) => API.post("/api/subscription/checkout", { plan }),
+  submitOrangePayment: (data) => API.post("/api/subscription/orange-payment", data),
 };
 
 // Default export for backward compatibility
 export const api = {
   auth: authAPI,
+  business: businessAPI,
   sales: salesAPI,
   inventory: inventoryAPI,
   debt: debtAPI,

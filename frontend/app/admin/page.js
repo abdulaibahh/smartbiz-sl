@@ -14,6 +14,7 @@ import {
   Loader2,
   Crown
 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 function AdminContent() {
   const { user } = useAuth();
@@ -61,9 +62,6 @@ function AdminContent() {
       b.name?.toLowerCase().includes(search.toLowerCase())
     );
   }, [businesses, search]);
-
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value || 0);
 
   const formatDate = (date) => {
     if (!date) return "N/A";

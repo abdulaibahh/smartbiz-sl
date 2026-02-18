@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { salesAPI } from "@/services/api";
 import { Receipt, Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 function SalesHistoryContent() {
   const [sales, setSales] = useState([]);
@@ -49,9 +50,6 @@ function SalesHistoryContent() {
       paid: acc.paid + (parseFloat(s.paid) || 0),
     }), { total: 0, paid: 0 });
   }, [filteredSales]);
-
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
 
   const formatDate = (date) => 
     new Date(date).toLocaleDateString('en-US', { 

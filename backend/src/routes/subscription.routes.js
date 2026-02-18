@@ -64,6 +64,78 @@ router.post("/checkout", auth, async (req, res) => {
   }
 });
 
+/* ================= ORANGE MONEY PAYMENT ================= */
+
+// Submit Orange Money payment request
+router.post("/orange-payment", auth, async (req, res) => {
+  try {
+    const { transactionId, senderNumber, amount } = req.body;
+
+    if (!transactionId || !senderNumber || !amount) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    // Store the payment request for admin review
+    // In production, you'd integrate with Orange Money API to verify
+    
+    // For now, we'll store pending payment for manual verification
+    await db.query(
+      `INSERT INTO subscription_payments 
+       (business_id, payment_method, transaction_id, sender_number, amount, status) 
+       VALUES ($1, 'orange_money', $2, $3, $4, 'pending')`,
+      [req.user.business_id, transactionId, senderNumber, amount]
+    );
+
+    res.json({ 
+      message: "Payment submitted for verification",
+      instruction: "Your payment is pending verification. We'll activate your subscription once confirmed."
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Failed to submit payment" });
+  }
+});
+
+// Admin: Verify Orange Money payment
+router.post("/verify-orange-payment", auth, async (req, res) => {
+  try {
+    // Check if user is admin
+    const userCheck = await db.query(
+      "SELECT role FROM users WHERE id = $1",
+      [req.user.id]
+    );
+
+    if (userCheck.rows[0]?.role !== "owner") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    const { paymentId, approved } = req.body;
+
+    if (approved) {
+      // Activate subscription
+      await db.query(
+        "UPDATE businesses SET subscription_active = true WHERE id = $1",
+        [req.user.business_id]
+      );
+      
+      await db.query(
+        "UPDATE subscription_payments SET status = 'approved' WHERE id = $1",
+        [paymentId]
+      );
+    } else {
+      await db.query(
+        "UPDATE subscription_payments SET status = 'rejected' WHERE id = $1",
+        [paymentId]
+      );
+    }
+
+    res.json({ message: approved ? "Payment verified" : "Payment rejected" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Verification failed" });
+  }
+});
+
 // Stripe webhook
 router.post(
   "/webhook",

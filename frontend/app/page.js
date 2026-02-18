@@ -14,6 +14,7 @@ import {
   ArrowDownRight,
   Clock
 } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -37,16 +38,6 @@ ChartJS.register(
   Legend,
   Filler
 );
-
-// Format currency
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value || 0);
-};
 
 // Format date
 const formatDate = (date) => {

@@ -16,3 +16,5 @@ Thumbs.db
 .turbo
 .idea/
 .blackboxcli/
+.smartbiz_sl_prompt.txt
+install.ps1.blackbox

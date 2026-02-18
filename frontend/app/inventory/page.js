@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { inventoryAPI } from "@/services/api";
 import { Package, Search, Plus, Minus, Trash2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 function InventoryContent() {
   const [inventory, setInventory] = useState([]);
@@ -31,30 +32,46 @@ function InventoryContent() {
     e.preventDefault();
     if (!newItem.product.trim()) return;
 
-    const updated = [...inventory, { 
-      id: Date.now(), 
-      product: newItem.product, 
-      quantity: parseInt(newItem.quantity) || 1,
-      created_at: new Date().toISOString()
-    }];
-    setInventory(updated);
-    await inventoryAPI.save(updated);
+    try {
+      await inventoryAPI.supplierOrder({
+        product: newItem.product,
+        quantity: parseInt(newItem.quantity) || 1
+      });
+      toast.success("Product added to inventory!");
+      loadInventory();
+    } catch (error) {
+      toast.error("Failed to add product");
+    }
     setNewItem({ product: "", quantity: 1 });
     setShowModal(false);
   };
 
   const handleUpdateQuantity = async (id, delta) => {
-    const updated = inventory.map(item => 
-      item.id === id ? { ...item, quantity: Math.max(0, item.quantity + delta) } : item
-    );
-    setInventory(updated);
-    await inventoryAPI.save(updated);
+    const item = inventory.find(i => i.id === id);
+    if (!item) return;
+    
+    const newQuantity = Math.max(0, item.quantity + delta);
+    
+    try {
+      await inventoryAPI.updateQuantity(id, newQuantity);
+      setInventory(prev => prev.map(i => 
+        i.id === id ? { ...i, quantity: newQuantity } : i
+      ));
+    } catch (error) {
+      toast.error("Failed to update quantity");
+    }
   };
 
   const handleDelete = async (id) => {
-    const updated = inventory.filter(item => item.id !== id);
-    setInventory(updated);
-    await inventoryAPI.save(updated);
+    if (!confirm("Delete this product?")) return;
+    
+    try {
+      await inventoryAPI.deleteItem(id);
+      setInventory(prev => prev.filter(i => i.id !== id));
+      toast.success("Product deleted");
+    } catch (error) {
+      toast.error("Failed to delete product");
+    }
   };
 
   const filtered = useMemo(() => {

@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { debtAPI, salesAPI } from "@/services/api";
 import { ShoppingCart, Search, CheckCircle, Clock, AlertTriangle } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 function DebtContent() {
   const [debts, setDebts] = useState([]);
@@ -48,9 +49,6 @@ function DebtContent() {
   const totals = useMemo(() => {
     return debts.reduce((sum, d) => sum + (parseFloat(d.amount) || 0), 0);
   }, [debts]);
-
-  const formatCurrency = (value) => 
-    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(value || 0);
 
   const formatDate = (date) => 
     new Date(date).toLocaleDateString('en-US', { 

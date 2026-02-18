@@ -6,6 +6,7 @@ import { salesAPI } from "@/services/api";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { Receipt, Loader2, Calculator, User, DollarSign } from "lucide-react";
+import { formatCurrency } from "@/lib/currency";
 
 function QuickSaleContent() {
   const router = useRouter();
@@ -13,7 +14,9 @@ function QuickSaleContent() {
   const [form, setForm] = useState({
     total: "",
     paid: "",
-    customer: ""
+    customer: "",
+    customerEmail: "",
+    sendEmail: false
   });
 
   const handleSubmit = async (e) => {
@@ -33,7 +36,9 @@ function QuickSaleContent() {
       await salesAPI.quickSale({
         total,
         paid,
-        customer: form.customer || "Walk-in Customer"
+        customer: form.customer || "Walk-in Customer",
+        sendEmail: form.sendEmail,
+        customerEmail: form.customerEmail
       });
 
       toast.success("Sale recorded successfully!");
@@ -122,12 +127,37 @@ function QuickSaleContent() {
             </div>
           </div>
 
+          {/* Send Receipt via Email */}
+          <div className="p-4 rounded-xl bg-zinc-800/30 border border-zinc-700">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.sendEmail}
+                onChange={(e) => setForm({ ...form, sendEmail: e.target.checked })}
+                className="w-5 h-5 rounded border-zinc-600 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span className="text-sm text-zinc-300">Send receipt via email</span>
+            </label>
+            
+            {form.sendEmail && (
+              <div className="mt-3">
+                <input
+                  type="email"
+                  placeholder="customer@email.com"
+                  value={form.customerEmail}
+                  onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                />
+              </div>
+            )}
+          </div>
+
           {/* Debt Display */}
           {debt > 0 && (
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/20">
               <div className="flex items-center justify-between">
                 <span className="text-amber-400 font-medium">Outstanding Debt</span>
-                <span className="text-xl font-bold text-amber-400">${debt.toFixed(2)}</span>
+                <span className="text-xl font-bold text-amber-400">{formatCurrency(debt)}</span>
               </div>
               <p className="text-xs text-amber-400/70 mt-1">
                 This debt will be recorded for customer tracking
