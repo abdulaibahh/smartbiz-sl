@@ -1,86 +1,81 @@
-# SmartBiz-SL Implementation TODO
+# Fix AI Network Error & Missing Customers Page - TODO
 
-## Phase 1: Database & Backend Foundation
+## Steps:
+- [x] 1. Update frontend/services/api.js - Add timeout and better error handling
+- [x] 2. Update frontend/app/ai/page.js - Switch from GET to POST for ask requests
+- [x] 3. Update backend/src/routes/ai.routes.js - Add POST endpoint for /ask
+- [x] 4. Create missing customers page at frontend/app/customers/page.js
+- [x] 5. Create missing formatDate.js utility
+- [x] 6. Fix import errors in customers page (useToast -> notifySuccess/notifyError)
+- [x] 7. Add better error handling to customer.routes.js
+- [x] 8. Create database setup script (backend/setup-database.js)
+- [ ] 9. Run database setup and test
 
-### 1.1 Database Updates
-- [ ] Add `orders` table for supplier orders
-- [ ] Add `order_items` table for order line items
-- [ ] Add `supplier_payments` table for payments to suppliers
-- [ ] Add `password_reset_tokens` table for password reset
-- [ ] Update `sales` table with `sale_type` column (cash/credit)
-- [ ] Update `users` table with `password_reset_token` and expiry fields
+## Progress:
+- Started: AI Network Error fix + Missing Customers Page
+- Current step: 8/9 - All code changes complete
 
-### 1.2 Password Reset Feature
-- [ ] Backend: Add password reset request endpoint
-- [ ] Backend: Add password reset confirm endpoint
-- [ ] Frontend: Add password reset request page
-- [ ] Frontend: Add password reset confirm page
-- [ ] Update login page with "Forgot Password" link
+## Summary of Changes:
 
-### 1.3 Debt Management Enhancement
-- [ ] Backend: Add debt payment endpoint
-- [ ] Backend: Get customer debt endpoint
-- [ ] Backend: Update debt after payment
-- [ ] Frontend: Add debt payment modal
-- [ ] Frontend: Show customer debt on customer detail
+### 1. frontend/services/api.js
+- Added 30-second timeout to axios instance
+- Added network error detection with specific error messages
+- Changed `aiAPI.ask` from GET to POST to avoid URL length issues
 
-### 1.4 Orders from Suppliers
-- [ ] Backend: Create order endpoint
-- [ ] Backend: Get orders endpoint
-- [ ] Backend: Receive order (auto-increase stock)
-- [ ] Backend: Update order status
-- [ ] Frontend: Orders list page
-- [ ] Frontend: Create order form
-- [ ] Frontend: Receive order functionality
+### 2. backend/src/routes/ai.routes.js
+- Added POST endpoint `/api/ai/ask` to handle long questions
+- Refactored to use shared `processAIQuestion` function
+- Added `handleAIError` for consistent error handling
+- Maintained backward compatibility with GET endpoint
 
-### 1.5 Payments to Suppliers
-- [ ] Backend: Create supplier payment endpoint
-- [ ] Backend: Get supplier payments endpoint
-- [ ] Frontend: Supplier payments section in orders
+### 3. frontend/app/customers/page.js (NEW)
+- Created complete customers management page
+- Features: list, search, add, edit, delete customers
+- View customer purchase history
+- Responsive grid layout with modals
 
-## Phase 2: Frontend Features
+### 4. frontend/lib/formatDate.js (NEW)
+- Created date formatting utility with formatDate and formatDateOnly functions
 
-### 2.1 Quick Sale Enhancement
-- [ ] Add "Quick Sale" button to dashboard
-- [ ] Add "Add New Customer" button in sales page
-- [ ] Add customer registration modal
-- [ ] Add Cash/Credit sale type toggle
+### 5. backend/src/routes/customer.routes.js (UPDATED)
+- Added better error handling with specific error messages
+- Added check for missing customers table
 
-### 2.2 Role-Based Access Control
-- [ ] Update role middleware for cashier limitations
-- [ ] Hide admin-only features from cashiers
-- [ ] Add permission checks on routes
-- [ ] Add visual indicators for restricted features
+### 6. backend/setup-database.js (NEW)
+- Script to create customers table if it doesn't exist
 
-### 2.3 Subscription Enhancement
-- [ ] Add payment verification status display
-- [ ] Add bank transfer option display
-- [ ] Add payment confirmation instructions
+### Root Cause - AI Network Error
+The Network Error was likely caused by:
+1. Long questions in GET request URL causing URL length issues
+2. No timeout configuration leading to hanging requests
+3. Poor network error handling
 
-## Phase 3: AI Enhancements
+### Root Cause - Customers 500 Error
+The customers table likely doesn't exist in the database yet.
 
-### 3.1 Enhanced AI Features
-- [ ] Add more detailed sales insights
-- [ ] Add inventory forecasting
-- [ ] Add customer behavior insights
-- [ ] Improve natural language queries
+## Next Steps - REQUIRED:
 
-## Phase 4: Polish & Testing
+1. **Run the database setup script:**
+   ```bash
+   cd backend
+   node setup-database.js
+   ```
 
-### 4.1 UI/UX Improvements
-- [ ] Add loading states
-- [ ] Add error handling
-- [ ] Add empty states
-- [ ] Improve mobile responsiveness
+2. **Restart the backend server:**
+   ```bash
+   npm start
+   # or
+   node server.js
+   ```
 
-### 4.2 Currency Display
-- [ ] Verify NLE currency format
-- [ ] Update all currency displays
+3. **Test the application:**
+   - AI chat should work without Network Errors
+   - Customers page should work without 500 errors
 
-## Implementation Order:
-1. Update database schema
-2. Implement password reset
-3. Implement debt management
-4. Implement orders & supplier payments
-5. Update frontend features
-6. Test and polish
+## Files Modified/Created:
+- frontend/services/api.js
+- backend/src/routes/ai.routes.js
+- frontend/app/customers/page.js (NEW)
+- frontend/lib/formatDate.js (NEW)
+- backend/src/routes/customer.routes.js
+- backend/setup-database.js (NEW)

@@ -51,8 +51,14 @@ router.post("/", auth, async (req, res) => {
     
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Failed to create customer" });
+    console.error("Create customer error:", err);
+    // Check if table doesn't exist
+    if (err.message && err.message.includes('relation "customers" does not exist')) {
+      return res.status(500).json({ 
+        message: "Database not set up properly. Please run the SQL schema to create the customers table." 
+      });
+    }
+    res.status(500).json({ message: "Failed to create customer: " + (err.message || "Unknown error") });
   }
 });
 

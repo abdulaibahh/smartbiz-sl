@@ -5,6 +5,7 @@ const API = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  timeout: 30000, // 30 second timeout
 });
 
 // Add auth token to requests
@@ -18,10 +19,22 @@ API.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle auth errors
+// Handle auth errors and network errors
 API.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Handle network errors
+    if (!error.response) {
+      console.error("Network Error:", error.message);
+      if (error.code === "ECONNABORTED") {
+        return Promise.reject(new Error("Request timeout - please try again"));
+      }
+      if (error.code === "ERR_NETWORK") {
+        return Promise.reject(new Error("Cannot connect to server - please check if backend is running"));
+      }
+    }
+    
+    // Handle auth errors
     if (error.response?.status === 401) {
       if (typeof window !== "undefined") {
         localStorage.removeItem("token");
@@ -82,7 +95,7 @@ export const debtAPI = {
 
 // ==================== AI ====================
 export const aiAPI = {
-  ask: (question) => API.get("/api/ai/ask", { params: { question } }),
+  ask: (question) => API.post("/api/ai/ask", { question }),
   getSummary: () => API.get("/api/ai/summary"),
   getInsights: (type) => API.get("/api/ai/insights", { params: { type } }),
 };

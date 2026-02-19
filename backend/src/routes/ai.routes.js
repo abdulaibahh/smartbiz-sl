@@ -313,8 +313,9 @@ Keep it brief and practical.
   }
 });
 
-/* ================= ASK AI (Enhanced) ================= */
+/* ================= ASK AI (Enhanced) - Supports both GET and POST ================= */
 
+// GET endpoint for backward compatibility
 router.get("/ask", auth, async (req, res) => {
   try {
     const { question } = req.query;
@@ -323,104 +324,127 @@ router.get("/ask", auth, async (req, res) => {
       return res.status(400).json({ answer: "Please ask a question" });
     }
 
-    const business_id = req.user.business_id;
+    return await processAIQuestion(req.user.business_id, question, res);
+  } catch (err) {
+    console.error("AI ask error:", err);
+    return handleAIError(req.user.business_id, res);
+  }
+});
 
-    // Get comprehensive business data
-    const [
-      salesData,
-      debtData,
-      inventoryData,
-      recentSales
-    ] = await Promise.all([
-      db.query(
-        `SELECT 
-          COALESCE(SUM(total), 0) as total_revenue,
-          COALESCE(SUM(paid), 0) as total_paid,
-          COUNT(*) as transaction_count,
-          MAX(created_at) as last_sale
-         FROM sales WHERE business_id=$1`,
-        [business_id]
-      ),
-      db.query(
-        `SELECT COALESCE(SUM(amount), 0) as total_debt FROM debts WHERE business_id=$1`,
-        [business_id]
-      ),
-      db.query(
-        `SELECT COUNT(*) as items, COALESCE(SUM(quantity), 0) as total_stock FROM inventory WHERE business_id=$1`,
-        [business_id]
-      ),
-      db.query(
-        `SELECT * FROM sales WHERE business_id=$1 ORDER BY created_at DESC LIMIT 50`,
-        [business_id]
-      )
-    ]);
+// POST endpoint for better reliability with long questions
+router.post("/ask", auth, async (req, res) => {
+  try {
+    const { question } = req.body;
 
-    const sales = salesData.rows[0];
-    const debts = debtData.rows[0];
-    const inventory = inventoryData.rows[0];
+    if (!question) {
+      return res.status(400).json({ answer: "Please ask a question" });
+    }
 
-    // Analyze the question type and provide data-driven answer
-    const questionLower = question.toLowerCase();
-    let dataAnswer = "";
+    return await processAIQuestion(req.user.business_id, question, res);
+  } catch (err) {
+    console.error("AI ask error:", err);
+    return handleAIError(req.user.business_id, res);
+  }
+});
 
-    // Revenue questions
-    if (questionLower.includes("revenue") || questionLower.includes("sales") || questionLower.includes("money")) {
-      dataAnswer += `💰 Total Revenue: NLE ${parseFloat(sales.total_revenue).toLocaleString()}\n`;
-      dataAnswer += `📊 Total Transactions: ${sales.transaction_count}\n`;
-      if (sales.transaction_count > 0) {
-        dataAnswer += `📈 Average Sale: NLE ${(parseFloat(sales.total_revenue) / sales.transaction_count).toFixed(0)}\n`;
+// Shared function to process AI questions
+async function processAIQuestion(business_id, question, res) {
+  // Get comprehensive business data
+  const [
+    salesData,
+    debtData,
+    inventoryData,
+    recentSales
+  ] = await Promise.all([
+    db.query(
+      `SELECT 
+        COALESCE(SUM(total), 0) as total_revenue,
+        COALESCE(SUM(paid), 0) as total_paid,
+        COUNT(*) as transaction_count,
+        MAX(created_at) as last_sale
+       FROM sales WHERE business_id=$1`,
+      [business_id]
+    ),
+    db.query(
+      `SELECT COALESCE(SUM(amount), 0) as total_debt FROM debts WHERE business_id=$1`,
+      [business_id]
+    ),
+    db.query(
+      `SELECT COUNT(*) as items, COALESCE(SUM(quantity), 0) as total_stock FROM inventory WHERE business_id=$1`,
+      [business_id]
+    ),
+    db.query(
+      `SELECT * FROM sales WHERE business_id=$1 ORDER BY created_at DESC LIMIT 50`,
+      [business_id]
+    )
+  ]);
+
+  const sales = salesData.rows[0];
+  const debts = debtData.rows[0];
+  const inventory = inventoryData.rows[0];
+
+  // Analyze the question type and provide data-driven answer
+  const questionLower = question.toLowerCase();
+  let dataAnswer = "";
+
+  // Revenue questions
+  if (questionLower.includes("revenue") || questionLower.includes("sales") || questionLower.includes("money") || questionLower.includes("earn")) {
+    dataAnswer += `💰 Total Revenue: NLE ${parseFloat(sales.total_revenue).toLocaleString()}\n`;
+    dataAnswer += `📊 Total Transactions: ${sales.transaction_count}\n`;
+    if (sales.transaction_count > 0) {
+      dataAnswer += `📈 Average Sale: NLE ${(parseFloat(sales.total_revenue) / sales.transaction_count).toFixed(0)}\n`;
+    }
+  }
+
+  // Debt questions
+  if (questionLower.includes("debt") || questionLower.includes("credit") || questionLower.includes("unpaid")) {
+    dataAnswer += `⚠️ Total Outstanding Debt: NLE ${parseFloat(debts.total_debt).toLocaleString()}\n`;
+  }
+
+  // Inventory questions
+  if (questionLower.includes("inventory") || questionLower.includes("stock") || questionLower.includes("product")) {
+    dataAnswer += `📦 Total Products: ${inventory.items}\n`;
+    dataAnswer += `📋 Total Stock: ${inventory.total_stock} units\n`;
+  }
+
+  // Top products/customers analysis
+  if (questionLower.includes("top") || questionLower.includes("best") || questionLower.includes("popular") || questionLower.includes("customer")) {
+    const customerStats = {};
+    recentSales.rows.forEach(sale => {
+      const cust = sale.customer || "Walk-in";
+      if (!customerStats[cust]) {
+        customerStats[cust] = { total: 0, count: 0 };
       }
-    }
-
-    // Debt questions
-    if (questionLower.includes("debt") || questionLower.includes("credit") || questionLower.includes("unpaid")) {
-      dataAnswer += `⚠️ Total Outstanding Debt: NLE ${parseFloat(debts.total_debt).toLocaleString()}\n`;
-    }
-
-    // Inventory questions
-    if (questionLower.includes("inventory") || questionLower.includes("stock") || questionLower.includes("product")) {
-      dataAnswer += `📦 Total Products: ${inventory.items}\n`;
-      dataAnswer += `📋 Total Stock: ${inventory.total_stock} units\n`;
-    }
-
-    // Top products/customers analysis
-    if (questionLower.includes("top") || questionLower.includes("best") || questionLower.includes("popular")) {
-      const customerStats = {};
-      recentSales.rows.forEach(sale => {
-        const cust = sale.customer || "Walk-in";
-        if (!customerStats[cust]) {
-          customerStats[cust] = { total: 0, count: 0 };
-        }
-        customerStats[cust].total += parseFloat(sale.total);
-        customerStats[cust].count += 1;
-      });
-      
-      const topCustomers = Object.entries(customerStats)
-        .sort((a, b) => b[1].total - a[1].total)
-        .slice(0, 5);
-      
-      if (topCustomers.length > 0) {
-        dataAnswer += `\n🏆 Top Customers:\n`;
-        topCustomers.forEach(([name, stats], i) => {
-          dataAnswer += `${i + 1}. ${name}: NLE ${stats.total.toLocaleString()} (${stats.count} visits)\n`;
-        });
-      }
-    }
-
-    // Check if OpenAI is configured for enhanced response
-    const openaiInstance = getOpenAI();
+      customerStats[cust].total += parseFloat(sale.total);
+      customerStats[cust].count += 1;
+    });
     
-    if (!openaiInstance) {
-      // Return data-driven response without AI
-      const fallbackAnswer = dataAnswer || `I don't have specific data for "${question}". Try asking about:\n- Revenue or sales\n- Debts or credits\n- Inventory or stock\n- Top customers or products`;
-      
-      return res.json({
-        answer: fallbackAnswer + "\n\n💡 Configure OPENAI_KEY in backend .env for AI-powered insights."
+    const topCustomers = Object.entries(customerStats)
+      .sort((a, b) => b[1].total - a[1].total)
+      .slice(0, 5);
+    
+    if (topCustomers.length > 0) {
+      dataAnswer += `\n🏆 Top Customers:\n`;
+      topCustomers.forEach(([name, stats], i) => {
+        dataAnswer += `${i + 1}. ${name}: NLE ${stats.total.toLocaleString()} (${stats.count} visits)\n`;
       });
     }
+  }
 
-    // Use AI for enhanced response
-    const prompt = `
+  // Check if OpenAI is configured for enhanced response
+  const openaiInstance = getOpenAI();
+  
+  if (!openaiInstance) {
+    // Return data-driven response without AI
+    const fallbackAnswer = dataAnswer || `I don't have specific data for "${question}". Try asking about:\n- Revenue or sales\n- Debts or credits\n- Inventory or stock\n- Top customers or products`;
+    
+    return res.json({
+      answer: fallbackAnswer + "\n\n💡 Configure OPENAI_KEY in backend .env for AI-powered insights."
+    });
+  }
+
+  // Use AI for enhanced response
+  const prompt = `
 You are a helpful business assistant. The user is asking about their business.
 
 Business Data:
@@ -439,36 +463,33 @@ Instructions:
 4. Don't make up data that isn't provided
 `;
 
-    const completion = await openaiInstance.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: 500
-    });
+  const completion = await openaiInstance.chat.completions.create({
+    model: "gpt-4o-mini",
+    messages: [{ role: "user", content: prompt }],
+    max_tokens: 500
+  });
 
-    res.json({ answer: completion.choices[0].message.content });
-  } catch (err) {
-    console.error("AI ask error:", err);
+  res.json({ answer: completion.choices[0].message.content });
+}
+
+// Shared error handler
+async function handleAIError(business_id, res) {
+  // Try to get basic data for fallback response
+  try {
+    const [salesData, debtData, inventoryData] = await Promise.all([
+      db.query(`SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE business_id=$1`, [business_id]),
+      db.query(`SELECT COALESCE(SUM(amount), 0) as total FROM debts WHERE business_id=$1`, [business_id]),
+      db.query(`SELECT COUNT(*) as items, COALESCE(SUM(quantity), 0) as stock FROM inventory WHERE business_id=$1`, [business_id])
+    ]);
     
-    // Return a more helpful error message
-    const business_id = req.user.business_id;
+    const fallbackAnswer = `I apologize, but I'm having trouble processing your request right now due to a technical issue.\n\nHowever, here's your business summary:\n- Revenue: NLE ${parseFloat(salesData.rows[0].total).toLocaleString()}\n- Transactions: ${salesData.rows[0].count}\n- Outstanding Debts: NLE ${parseFloat(debtData.rows[0].total).toLocaleString()}\n- Inventory: ${inventoryData.rows[0].items} products (${inventoryData.rows[0].stock} units)\n\nPlease try again in a few moments.`;
     
-    // Try to get basic data for fallback response
-    try {
-      const [salesData, debtData, inventoryData] = await Promise.all([
-        db.query(`SELECT COALESCE(SUM(total), 0) as total, COUNT(*) as count FROM sales WHERE business_id=$1`, [business_id]),
-        db.query(`SELECT COALESCE(SUM(amount), 0) as total FROM debts WHERE business_id=$1`, [business_id]),
-        db.query(`SELECT COUNT(*) as items, COALESCE(SUM(quantity), 0) as stock FROM inventory WHERE business_id=$1`, [business_id])
-      ]);
-      
-      const fallbackAnswer = `I apologize, but I'm having trouble processing your request right now due to a technical issue.\n\nHowever, here's your business summary:\n- Revenue: NLE ${parseFloat(salesData.rows[0].total).toLocaleString()}\n- Transactions: ${salesData.rows[0].count}\n- Outstanding Debts: NLE ${parseFloat(debtData.rows[0].total).toLocaleString()}\n- Inventory: ${inventoryData.rows[0].items} products (${inventoryData.rows[0].stock} units)\n\nPlease try again in a few moments.`;
-      
-      return res.json({ answer: fallbackAnswer });
-    } catch (fallbackErr) {
-      return res.json({ 
-        answer: "I apologize, but I encountered an error while processing your request. Please try again later." 
-      });
-    }
+    return res.json({ answer: fallbackAnswer });
+  } catch (fallbackErr) {
+    return res.json({ 
+      answer: "I apologize, but I encountered an error while processing your request. Please try again later." 
+    });
   }
-});
+}
 
 module.exports = router;
