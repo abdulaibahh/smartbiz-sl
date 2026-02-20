@@ -25,13 +25,24 @@ API.interceptors.response.use(
   (error) => {
     // Handle network errors
     if (!error.response) {
-      console.error("Network Error:", error.message);
-      if (error.code === "ECONNABORTED") {
-        return Promise.reject(new Error("Request timeout - please try again"));
+      // Determine more specific error message
+      let errorMessage = "Network Error: Unable to connect to server";
+      
+      if (error.message) {
+        // Check for common error patterns
+        if (error.message.includes("Network Error") || error.message.includes("net::ERR")) {
+          errorMessage = "Cannot connect to server. Please check that the backend is running on port 5000.";
+        } else if (error.message.includes("timeout") || error.code === "ECONNABORTED") {
+          errorMessage = "Request timeout - the server took too long to respond. Please try again.";
+        } else if (error.message.includes("CORS")) {
+          errorMessage = "CORS error - the server is not allowing cross-origin requests.";
+        } else {
+          errorMessage = "Network Error: " + error.message;
+        }
       }
-      if (error.code === "ERR_NETWORK") {
-        return Promise.reject(new Error("Cannot connect to server - please check if backend is running"));
-      }
+      
+      console.error(errorMessage);
+      return Promise.reject(new Error(errorMessage));
     }
     
     // Handle auth errors

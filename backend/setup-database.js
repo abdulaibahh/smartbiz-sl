@@ -157,10 +157,24 @@ async function setupDatabase() {
       await db.query(`ALTER TABLE debts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`);
       await db.query(`ALTER TABLE debts ADD COLUMN IF NOT EXISTS description TEXT`);
       await db.query(`ALTER TABLE debts ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
-      console.log("✓ Debts columns verified");
+    console.log("✓ Debts columns verified");
     } catch (e) {
       // Columns may already exist, ignore error
     }
+
+    // Create debt_payments table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS debt_payments (
+        id SERIAL PRIMARY KEY,
+        debt_id INTEGER NOT NULL,
+        business_id INTEGER,
+        amount NUMERIC NOT NULL,
+        payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        notes TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log("✓ Debt payments table ready");
 
     
     // Create subscriptions table

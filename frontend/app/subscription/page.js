@@ -30,6 +30,23 @@ function SubscriptionContent() {
         if (historyRes?.data?.payments) {
           setPaymentHistory(historyRes.data.payments);
         }
+        
+        // Handle redirect from Stripe using window.location
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search);
+          const success = params.get("success");
+          const cancel = params.get("cancel");
+          
+          if (success === "true") {
+            toast.success("Payment successful! Your subscription is now active.");
+            // Clean up URL
+            window.history.replaceState({}, document.title, "/subscription");
+          } else if (cancel === "true") {
+            toast.error("Payment was cancelled.");
+            // Clean up URL
+            window.history.replaceState({}, document.title, "/subscription");
+          }
+        }
       } catch (error) {
         console.error("Subscription status error:", error);
         setStatus({ active: false, daysRemaining: 0 });

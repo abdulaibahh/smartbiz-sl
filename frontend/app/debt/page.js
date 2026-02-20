@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { debtAPI, salesAPI, customerAPI } from "@/services/api";
-import { ShoppingCart, Search, CheckCircle, Clock, AlertTriangle, Plus, X, User, DollarSign, Calendar, FileText } from "lucide-react";
+import { ShoppingCart, Search, CheckCircle, Clock, AlertTriangle, Plus, X, User, DollarSign, Calendar, FileText, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import toast from "react-hot-toast";
 

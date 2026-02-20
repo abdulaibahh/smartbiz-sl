@@ -11,10 +11,7 @@ const PORT = process.env.PORT || 5000;
 /* SECURITY */
 app.use(helmet());
 app.use(cors({
-  origin: [
-    "http://localhost:5000", 
-    "https://smart-biz-sl.vercel.app/" 
-  ],
+  origin: "*",
   credentials: true
 }));
 

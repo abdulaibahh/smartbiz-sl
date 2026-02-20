@@ -180,14 +180,19 @@ router.post("/quick", auth, sub, async (req, res) => {
 /* ================= GET ALL SALES ================= */
 
 router.get("/all", auth, async (req, res) => {
+  console.log("[SALES] GET /all - Request received");
+  console.log("[SALES] User:", req.user);
+  console.log("[SALES] Business ID:", req.user?.business_id);
+  
   try {
     const sales = await db.query(
       "SELECT * FROM sales WHERE business_id=$1 ORDER BY created_at DESC",
       [req.user.business_id]
     );
+    console.log("[SALES] Found:", sales.rows.length, "sales");
     res.json(sales.rows);
   } catch (err) {
-    console.error("Get sales error:", err);
+    console.error("[SALES] Get sales error:", err);
     res.status(500).json({ message: "Failed to fetch sales" });
   }
 });

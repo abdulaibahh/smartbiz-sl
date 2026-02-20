@@ -42,7 +42,7 @@ async function activateSubscription(businessId, paymentMethod, paymentId) {
 // Helper function to check if subscription is expired
 async function checkAndUpdateSubscriptionStatus(businessId) {
   const result = await db.query(
-    `SELECT subscription_active, subscription_end_date 
+    `SELECT subscription_active, subscription_end_date, trial_end
      FROM businesses WHERE id = $1`,
     [businessId]
   );
@@ -52,8 +52,22 @@ async function checkAndUpdateSubscriptionStatus(businessId) {
   const biz = result.rows[0];
   const now = new Date();
   const endDate = biz.subscription_end_date ? new Date(biz.subscription_end_date) : null;
+  const trialEnd = biz.trial_end ? new Date(biz.trial_end) : null;
   
-  // If subscription expired, deactivate it
+  // Check if there's a valid trial period
+  if (!biz.subscription_active && trialEnd && now <= trialEnd) {
+    // Trial is still active
+    const daysRemaining = Math.ceil((trialEnd - now) / (1000 * 60 * 60 * 24));
+    return {
+      active: true, // Treat trial as active
+      isTrial: true,
+      endDate: trialEnd,
+      daysRemaining: daysRemaining,
+      expired: false
+    };
+  }
+  
+  // If subscription exists and is active, check if it's expired
   if (biz.subscription_active && endDate && now > endDate) {
     await db.query(
       `UPDATE businesses SET subscription_active = false WHERE id = $1`,
@@ -67,14 +81,24 @@ async function checkAndUpdateSubscriptionStatus(businessId) {
     };
   }
   
-  // Calculate days remaining
-  const daysRemaining = endDate ? Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)) : 0;
+  // If subscription is active
+  if (biz.subscription_active) {
+    const daysRemaining = endDate ? Math.ceil((endDate - now) / (1000 * 60 * 60 * 24)) : 0;
+    return {
+      active: true,
+      endDate: endDate,
+      daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
+      expired: daysRemaining <= 0
+    };
+  }
   
+  // No subscription and no trial (or trial expired)
   return {
-    active: biz.subscription_active,
-    endDate: endDate,
-    daysRemaining: daysRemaining > 0 ? daysRemaining : 0,
-    expired: daysRemaining <= 0
+    active: false,
+    isTrial: false,
+    endDate: trialEnd,
+    daysRemaining: 0,
+    expired: true
   };
 }
 

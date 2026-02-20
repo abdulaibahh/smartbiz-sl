@@ -5,33 +5,46 @@ const sub = require("../middlewares/subscription");
 
 // Get all inventory
 router.get("/all", auth, async (req, res) => {
+  console.log("[INVENTORY] GET /all - Request received");
+  console.log("[INVENTORY] User:", req.user);
+  console.log("[INVENTORY] Business ID:", req.user?.business_id);
+  
   try {
     const inventory = await db.query(
       "SELECT * FROM inventory WHERE business_id=$1 ORDER BY product",
       [req.user.business_id]
     );
+    console.log("[INVENTORY] Found:", inventory.rows.length, "items");
     res.json(inventory.rows);
   } catch (err) {
-    console.error(err);
+    console.error("[INVENTORY] Get inventory error:", err);
     res.status(500).json({ message: "Failed to fetch inventory" });
   }
 });
 
 // Supplier order - add stock
 router.post("/supplier-order", auth, sub, async (req, res) => {
+  console.log("[INVENTORY] POST /supplier-order - Request received");
+  console.log("[INVENTORY] Body:", req.body);
+  console.log("[INVENTORY] User:", req.user);
+  
   const { product, quantity, cost_price, selling_price } = req.body;
 
   if (!product || !quantity) {
+    console.log("[INVENTORY] Missing product or quantity");
     return res.status(400).json({ message: "Product and quantity required" });
   }
 
   try {
+    console.log("[INVENTORY] Checking for existing product:", product);
     const existing = await db.query(
       "SELECT * FROM inventory WHERE business_id=$1 AND product=$2",
       [req.user.business_id, product]
     );
+    console.log("[INVENTORY] Existing product:", existing.rows.length > 0 ? "Found" : "Not found");
 
     if (existing.rows.length) {
+      console.log("[INVENTORY] Updating existing product");
       // Update existing product - keep original prices unless explicitly provided
       if (cost_price !== undefined && selling_price !== undefined) {
         await db.query(
@@ -55,6 +68,7 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
         );
       }
     } else {
+      console.log("[INVENTORY] Inserting new product");
       // Insert new product with prices
       await db.query(
         "INSERT INTO inventory(business_id, product, quantity, cost_price, selling_price, updated_at) VALUES($1, $2, $3, $4, $5, NOW())",
@@ -62,9 +76,10 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
       );
     }
 
+    console.log("[INVENTORY] Success!");
     res.json({ message: "Inventory updated" });
   } catch (err) {
-    console.error(err);
+    console.error("[INVENTORY] Error:", err);
     res.status(500).json({ message: "Failed to update inventory" });
   }
 });

@@ -5,6 +5,10 @@ const auth = require("../middlewares/auth");
 /* ================= GET ALL DEBTS ================= */
 
 router.get("/all", auth, async (req, res) => {
+  console.log("[DEBT] GET /all - Request received");
+  console.log("[DEBT] User:", req.user);
+  console.log("[DEBT] Business ID:", req.user?.business_id);
+  
   try {
     const debts = await db.query(
       `SELECT d.*, c.name as customer_name, c.phone as customer_phone
@@ -14,9 +18,10 @@ router.get("/all", auth, async (req, res) => {
        ORDER BY d.created_at DESC`,
       [req.user.business_id]
     );
+    console.log("[DEBT] Found:", debts.rows.length, "debts");
     res.json(debts.rows);
   } catch (err) {
-    console.error("Get debts error:", err);
+    console.error("[DEBT] Get debts error:", err);
     res.status(500).json({ message: "Failed to fetch debts" });
   }
 });
