@@ -82,6 +82,14 @@ router.post("/setup", async (req, res) => {
     )`);
     console.log("✓ sales table created");
     
+    // Create sales_items table
+    await db.query(`CREATE TABLE IF NOT EXISTS sales_items (
+      id SERIAL PRIMARY KEY, sale_id INTEGER, product_id INTEGER, product_name TEXT,
+      quantity INTEGER NOT NULL, unit_price NUMERIC NOT NULL, total NUMERIC NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log("✓ sales_items table created");
+    
     // Create customers table
     await db.query(`CREATE TABLE IF NOT EXISTS customers (
       id SERIAL PRIMARY KEY, business_id INTEGER, name TEXT NOT NULL, email TEXT,
