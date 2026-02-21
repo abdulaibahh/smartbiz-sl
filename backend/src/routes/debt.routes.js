@@ -1,10 +1,11 @@
 const router = require("express").Router();
 const db = require("../config/db");
 const auth = require("../middlewares/auth");
+const sub = require("../middlewares/subscription");
 
 /* ================= GET ALL DEBTS ================= */
 
-router.get("/all", auth, async (req, res) => {
+router.get("/all", auth, sub, async (req, res) => {
   console.log("[DEBT] GET /all - Request received");
   console.log("[DEBT] User:", req.user);
   console.log("[DEBT] Business ID:", req.user?.business_id);
@@ -28,7 +29,7 @@ router.get("/all", auth, async (req, res) => {
 
 /* ================= GET CUSTOMER DEBT ================= */
 
-router.get("/customer/:customerId", auth, async (req, res) => {
+router.get("/customer/:customerId", auth, sub, async (req, res) => {
   try {
     const { customerId } = req.params;
     
@@ -65,7 +66,7 @@ router.get("/customer/:customerId", auth, async (req, res) => {
 
 /* ================= RECORD DEBT PAYMENT ================= */
 
-router.post("/payment", auth, async (req, res) => {
+router.post("/payment", auth, sub, async (req, res) => {
   try {
     const { debtId, amount, notes } = req.body;
     
@@ -120,7 +121,7 @@ router.post("/payment", auth, async (req, res) => {
 
 /* ================= GET DEBT PAYMENT HISTORY ================= */
 
-router.get("/payments/:debtId", auth, async (req, res) => {
+router.get("/payments/:debtId", auth, sub, async (req, res) => {
   try {
     const { debtId } = req.params;
     
@@ -148,7 +149,7 @@ router.get("/payments/:debtId", auth, async (req, res) => {
 
 /* ================= CREATE NEW DEBT ================= */
 
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, sub, async (req, res) => {
   try {
     const { customer_id, amount, description, due_date } = req.body;
     
@@ -185,7 +186,7 @@ router.post("/", auth, async (req, res) => {
 
 /* ================= GET DEBT SUMMARY ================= */
 
-router.get("/summary", auth, async (req, res) => {
+router.get("/summary", auth, sub, async (req, res) => {
   try {
     const result = await db.query(
       `SELECT 

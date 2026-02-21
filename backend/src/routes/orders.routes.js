@@ -1,10 +1,11 @@
 const router = require("express").Router();
 const db = require("../config/db");
 const auth = require("../middlewares/auth");
+const sub = require("../middlewares/subscription");
 
 /* ================= GET ALL ORDERS ================= */
 
-router.get("/all", auth, async (req, res) => {
+router.get("/all", auth, sub, async (req, res) => {
   try {
     const orders = await db.query(
       `SELECT * FROM orders WHERE business_id=$1 ORDER BY created_at DESC`,
@@ -19,7 +20,7 @@ router.get("/all", auth, async (req, res) => {
 
 /* ================= GET SINGLE ORDER ================= */
 
-router.get("/:id", auth, async (req, res) => {
+router.get("/:id", auth, sub, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -50,7 +51,7 @@ router.get("/:id", auth, async (req, res) => {
 
 /* ================= CREATE ORDER ================= */
 
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, sub, async (req, res) => {
   try {
     const { supplier_name, supplier_contact, expected_delivery_date, items, notes } = req.body;
     
@@ -99,7 +100,7 @@ router.post("/", auth, async (req, res) => {
 
 /* ================= RECEIVE ORDER (AUTO-INCREASE STOCK) ================= */
 
-router.put("/:id/receive", auth, async (req, res) => {
+router.put("/:id/receive", auth, sub, async (req, res) => {
   try {
     const { id } = req.params;
     const { items } = req.body;
@@ -174,7 +175,7 @@ router.put("/:id/receive", auth, async (req, res) => {
 
 /* ================= DELETE ORDER ================= */
 
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", auth, sub, async (req, res) => {
   try {
     const { id } = req.params;
     
@@ -203,7 +204,7 @@ router.delete("/:id", auth, async (req, res) => {
 
 /* ================= GET SUPPLIER PAYMENTS ================= */
 
-router.get("/:orderId/payments", auth, async (req, res) => {
+router.get("/:orderId/payments", auth, sub, async (req, res) => {
   try {
     const { orderId } = req.params;
     
@@ -221,7 +222,7 @@ router.get("/:orderId/payments", auth, async (req, res) => {
 
 /* ================= RECORD SUPPLIER PAYMENT ================= */
 
-router.post("/:orderId/payment", auth, async (req, res) => {
+router.post("/:orderId/payment", auth, sub, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { amount, payment_method, reference_number, notes } = req.body;

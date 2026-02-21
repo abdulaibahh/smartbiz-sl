@@ -1,9 +1,10 @@
 const router = require("express").Router();
 const db = require("../config/db");
 const auth = require("../middlewares/auth");
+const sub = require("../middlewares/subscription");
 
 // Get all customers
-router.get("/all", auth, async (req, res) => {
+router.get("/all", auth, sub, async (req, res) => {
   try {
     const customers = await db.query(
       "SELECT * FROM customers WHERE business_id=$1 ORDER BY name",
@@ -17,7 +18,7 @@ router.get("/all", auth, async (req, res) => {
 });
 
 // Get single customer
-router.get("/:id", auth, async (req, res) => {
+router.get("/:id", auth, sub, async (req, res) => {
   try {
     const customer = await db.query(
       "SELECT * FROM customers WHERE id=$1 AND business_id=$2",
@@ -36,7 +37,7 @@ router.get("/:id", auth, async (req, res) => {
 });
 
 // Create customer
-router.post("/", auth, async (req, res) => {
+router.post("/", auth, sub, async (req, res) => {
   const { name, email, phone, address, notes } = req.body;
   
   if (!name) {
@@ -63,7 +64,7 @@ router.post("/", auth, async (req, res) => {
 });
 
 // Update customer
-router.put("/:id", auth, async (req, res) => {
+router.put("/:id", auth, sub, async (req, res) => {
   const { id } = req.params;
   const { name, email, phone, address, notes } = req.body;
 
@@ -88,7 +89,7 @@ router.put("/:id", auth, async (req, res) => {
 });
 
 // Delete customer
-router.delete("/:id", auth, async (req, res) => {
+router.delete("/:id", auth, sub, async (req, res) => {
   try {
     await db.query(
       "DELETE FROM customers WHERE id=$1 AND business_id=$2",
@@ -102,7 +103,7 @@ router.delete("/:id", auth, async (req, res) => {
 });
 
 // Get customer purchase history
-router.get("/:id/history", auth, async (req, res) => {
+router.get("/:id/history", auth, sub, async (req, res) => {
   try {
     const customer = await db.query(
       "SELECT name FROM customers WHERE id=$1 AND business_id=$2",
