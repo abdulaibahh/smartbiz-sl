@@ -188,9 +188,13 @@ CREATE TABLE supplier_payments (
 -- Update debts table to include customer_id
 
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS customer_id INTEGER REFERENCES customers(id);
+
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS sale_id INTEGER REFERENCES sales(id);
+
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS payment_amount NUMERIC DEFAULT 0;
+
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending';
+
 ALTER TABLE debts ADD COLUMN IF NOT EXISTS due_date DATE;
 
 -- Debt payments table to track individual payments
