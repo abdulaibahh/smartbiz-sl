@@ -53,8 +53,37 @@ app.use((err, req, res, next) => {
 });
 
 /* START */
-app.listen(PORT, () =>
-  console.log(`✅ Server running on ${PORT}`)
-);
+app.listen(PORT, async () => {
+  console.log(`✅ Server running on ${PORT}`);
+  
+  // Auto-setup database on startup
+  try {
+    const db = require("./src/config/db");
+    console.log("🔧 Setting up database tables...");
+    
+    await db.query(`CREATE TABLE IF NOT EXISTS businesses (
+      id SERIAL PRIMARY KEY, name TEXT, shop_name TEXT, address TEXT, phone TEXT,
+      logo_url TEXT, trial_end TIMESTAMP, subscription_active BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    
+    await db.query(`CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY, name TEXT, email TEXT UNIQUE, password TEXT,
+      role TEXT DEFAULT 'cashier', business_id INTEGER,
+      password_reset_token TEXT, password_reset_expires TIMESTAMP,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    
+    await db.query(`CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id SERIAL PRIMARY KEY, user_id INTEGER, token TEXT UNIQUE NOT NULL,
+      expires_at TIMESTAMP NOT NULL, used BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    
+    console.log("✅ Database tables ready!");
+  } catch (err) {
+    console.log("⚠️ Database setup:", err.message);
+  }
+});
 
 require("./src/jobs/dailyReport");
