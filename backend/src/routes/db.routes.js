@@ -4,6 +4,9 @@ const db = require("../config/db");
 // Health check with database test
 router.get("/health", async (req, res) => {
   try {
+    console.log("Testing database connection...");
+    console.log("DATABASE_URL:", process.env.DATABASE_URL ? "set" : "NOT SET");
+    
     // Test database connection
     const result = await db.query("SELECT NOW()");
     
@@ -21,10 +24,12 @@ router.get("/health", async (req, res) => {
       tables: tableNames
     });
   } catch (err) {
+    console.error("Database health check error:", err);
     res.status(500).json({
       status: "error",
       message: err.message,
-      code: err.code
+      code: err.code,
+      hint: "Check if DATABASE_URL environment variable is set correctly"
     });
   }
 });
