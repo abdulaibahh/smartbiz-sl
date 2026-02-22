@@ -178,6 +178,17 @@ router.post("/setup", async (req, res) => {
     )`);
     console.log("✓ subscription_payments table created");
     
+    // Create debt_payments table
+    await db.query(`CREATE TABLE IF NOT EXISTS debt_payments (
+      id SERIAL PRIMARY KEY,
+      debt_id INTEGER,
+      business_id INTEGER,
+      amount NUMERIC,
+      notes TEXT,
+      payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log("✓ debt_payments table created");
+    
     res.json({ message: "All tables created successfully!" });
   } catch (err) {
     console.error("Setup error:", err);
