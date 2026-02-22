@@ -27,14 +27,20 @@ function SubscriptionContent() {
         
         const res = await subscriptionAPI.getStatus();
         console.log("API Response:", res);
-        console.log("Response data:", res.data);
+        console.log("Response data:", JSON.stringify(res.data, null, 2));
         
         setStatus(res.data);
         
+        console.log("Status after set:", JSON.stringify(res.data, null, 2));
+        
         // Fetch payment history
-        const historyRes = await subscriptionAPI.getPayments?.();
-        if (historyRes?.data?.payments) {
-          setPaymentHistory(historyRes.data.payments);
+        try {
+          const historyRes = await subscriptionAPI.getPayments?.();
+          if (historyRes?.data?.payments) {
+            setPaymentHistory(historyRes.data.payments);
+          }
+        } catch (payErr) {
+          console.log("Payment history error (ignored):", payErr.message);
         }
         
         // Handle redirect from Stripe using window.location

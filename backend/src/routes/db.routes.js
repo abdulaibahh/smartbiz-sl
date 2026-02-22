@@ -121,6 +121,33 @@ router.post("/setup", async (req, res) => {
     )`);
     console.log("✓ orders table created");
     
+    // Add missing columns to businesses table
+    try {
+      await db.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS subscription_start_date TIMESTAMP`);
+      await db.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS subscription_end_date TIMESTAMP`);
+      await db.query(`ALTER TABLE businesses ADD COLUMN IF NOT EXISTS stripe_customer_id TEXT`);
+      console.log("✓ Subscription columns added to businesses");
+    } catch (e) {
+      console.log("Note: Some columns may already exist");
+    }
+    
+    // Create subscription_payments table
+    await db.query(`CREATE TABLE IF NOT EXISTS subscription_payments (
+      id SERIAL PRIMARY KEY,
+      business_id INTEGER,
+      payment_method TEXT,
+      transaction_id TEXT,
+      sender_number TEXT,
+      amount NUMERIC,
+      status TEXT DEFAULT 'pending',
+      verification_notes TEXT,
+      verified_by INTEGER,
+      verified_at TIMESTAMP,
+      subscription_activated BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+    console.log("✓ subscription_payments table created");
+    
     res.json({ message: "All tables created successfully!" });
   } catch (err) {
     console.error("Setup error:", err);
