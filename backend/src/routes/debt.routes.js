@@ -67,12 +67,19 @@ router.get("/customer/:customerId", auth, sub, async (req, res) => {
 /* ================= RECORD DEBT PAYMENT ================= */
 
 router.post("/payment", auth, sub, async (req, res) => {
+  console.log("[DEBT PAYMENT] Request received");
+  console.log("[DEBT PAYMENT] Body:", req.body);
+  console.log("[DEBT PAYMENT] User:", req.user);
+  
   try {
     const { debtId, amount, notes } = req.body;
     
     if (!debtId || !amount) {
+      console.log("[DEBT PAYMENT] Missing debtId or amount");
       return res.status(400).json({ message: "Debt ID and amount are required" });
     }
+    
+    console.log("[DEBT PAYMENT] Looking for debt:", debtId, "business:", req.user.business_id);
     
     const debt = await db.query(
       "SELECT * FROM debts WHERE id=$1 AND business_id=$2",
@@ -80,8 +87,11 @@ router.post("/payment", auth, sub, async (req, res) => {
     );
     
     if (!debt.rows.length) {
+      console.log("[DEBT PAYMENT] Debt not found:", debtId);
       return res.status(404).json({ message: "Debt not found" });
     }
+    
+    console.log("[DEBT PAYMENT] Debt found:", debt.rows[0]);
     
     const debtRecord = debt.rows[0];
     const paymentAmount = parseFloat(amount);
@@ -90,22 +100,58 @@ router.post("/payment", auth, sub, async (req, res) => {
     const newPaid = currentPaid + paymentAmount;
     const newBalance = currentAmount - newPaid;
     
+    console.log("[DEBT PAYMENT] Payment:", paymentAmount, "Current:", currentPaid, "New:", newPaid, "Balance:", newBalance);
+    
     let status = "partial";
     if (newBalance <= 0) {
       status = "paid";
     }
     
     // Record individual payment
+    console.log("[DEBT PAYMENT] Inserting payment record...");
     await db.query(
       "INSERT INTO debt_payments (debt_id, business_id, amount, notes, payment_date) VALUES ($1, $2, $3, $4, NOW())",
       [debtId, req.user.business_id, paymentAmount, notes || null]
     );
+    console.log("[DEBT PAYMENT] Payment record inserted");
     
     // Update debt totals
-    await db.query(
-      "UPDATE debts SET payment_amount=$1, status=$2, updated_at=NOW() WHERE id=$3",
-      [newPaid, status, debtId]
-    );
+    console.log("[DEBT PAYMENT] Updating debt record...");
+    try {
+      await db.query(
+        "UPDATE debts SET payment_amount=$1, status=$2, updated_at=NOW() WHERE id=$3",
+        [newPaid, status, debtId]
+      );
+    } catch (updateErr) {
+      if (updateErr.message.includes('column "updated_at" does not exist')) {
+        console.log("[DEBT PAYMENT] updated_at column not found, updating without it");
+        await db.query(
+          "UPDATE debts SET payment_amount=$1, status=$2 WHERE id=$3",
+          [newPaid, status, debtId]
+        );
+      } else {
+        throw updateErr;
+      }
+    }
+    console.log("[DEBT PAYMENT] Debt updated successfully");
+    
+    // Update customer total debt
+    if (debtRecord.customer_id) {
+      const customer = await db.query(
+        "SELECT total_debt FROM customers WHERE id=$1",
+        [debtRecord.customer_id]
+      );
+      
+      if (customer.rows.length > 0) {
+        const currentTotalDebt = parseFloat(customer.rows[0].total_debt) || 0;
+        const newTotalDebt = Math.max(0, currentTotalDebt - paymentAmount);
+        await db.query(
+          "UPDATE customers SET total_debt=$1 WHERE id=$2",
+          [newTotalDebt, debtRecord.customer_id]
+        );
+        console.log("[DEBT PAYMENT] Customer debt updated");
+      }
+    }
     
     res.json({ 
       message: "Payment recorded successfully",
@@ -114,7 +160,8 @@ router.post("/payment", auth, sub, async (req, res) => {
       status
     });
   } catch (err) {
-    console.error("Debt payment error:", err);
+    console.error("[DEBT PAYMENT] Error:", err);
+    console.error("[DEBT PAYMENT] Stack:", err.stack);
     res.status(500).json({ message: "Failed to record payment" });
   }
 });
@@ -125,7 +172,6 @@ router.get("/payments/:debtId", auth, sub, async (req, res) => {
   try {
     const { debtId } = req.params;
     
-    // Verify debt belongs to this business
     const debt = await db.query(
       "SELECT * FROM debts WHERE id=$1 AND business_id=$2",
       [debtId, req.user.business_id]
@@ -157,7 +203,6 @@ router.post("/", auth, sub, async (req, res) => {
       return res.status(400).json({ message: "Customer ID and amount are required" });
     }
     
-    // Verify customer exists and belongs to this business
     const customer = await db.query(
       "SELECT * FROM customers WHERE id=$1 AND business_id=$2",
       [customer_id, req.user.business_id]
