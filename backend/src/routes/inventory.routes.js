@@ -10,6 +10,23 @@ router.get("/all", auth, async (req, res) => {
   console.log("[INVENTORY] Business ID:", req.user?.business_id);
   
   try {
+    // First, ensure retail/wholesale columns exist and copy data from legacy columns
+    try {
+      await db.query(`
+        UPDATE inventory SET 
+          retail_quantity = COALESCE(retail_quantity, quantity),
+          wholesale_quantity = COALESCE(wholesale_quantity, 0),
+          retail_cost_price = COALESCE(retail_cost_price, cost_price),
+          wholesale_cost_price = COALESCE(wholesale_cost_price, 0),
+          retail_price = COALESCE(retail_price, selling_price),
+          wholesale_price = COALESCE(wholesale_price, selling_price)
+        WHERE business_id = $1
+      `, [req.user.business_id]);
+    } catch (colErr) {
+      // Columns might not exist yet, continue anyway
+      console.log("[INVENTORY] Column migration note:", colErr.message);
+    }
+    
     const inventory = await db.query(
       "SELECT * FROM inventory WHERE business_id=$1 ORDER BY product",
       [req.user.business_id]

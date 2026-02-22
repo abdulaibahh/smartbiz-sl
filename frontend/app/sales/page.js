@@ -70,9 +70,11 @@ function SalesContent() {
   // Get price based on sale type
   const getPrice = (product) => {
     if (saleType === 'retail') {
-      return product.retail_price || product.selling_price || 0;
+      // Use retail_price if available, otherwise fallback to selling_price
+      return parseFloat(product.retail_price || product.selling_price || 0);
     } else {
-      return product.wholesale_price || product.selling_price || 0;
+      // Use wholesale_price if available, otherwise fallback to selling_price
+      return parseFloat(product.wholesale_price || product.selling_price || 0);
     }
   };
 

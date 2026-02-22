@@ -131,6 +131,36 @@ router.post("/setup", async (req, res) => {
       console.log("Note: Some columns may already exist");
     }
     
+    // Add retail and wholesale columns to inventory table
+    try {
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_quantity INTEGER DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_quantity INTEGER DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_cost_price NUMERIC DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_cost_price NUMERIC DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_price NUMERIC DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_price NUMERIC DEFAULT 0`);
+      
+      // Copy existing data to retail columns for backward compatibility
+      await db.query(`UPDATE inventory SET 
+        retail_quantity = COALESCE(retail_quantity, 0),
+        retail_cost_price = COALESCE(retail_cost_price, 0),
+        retail_price = COALESCE(retail_price, 0)
+        WHERE retail_quantity IS NULL OR retail_quantity = 0`);
+        
+      console.log("✓ Retail/Wholesale columns added to inventory");
+    } catch (e) {
+      console.log("Note: Inventory columns may already exist");
+    }
+    
+    // Add sale_type to sales table
+    try {
+      await db.query(`ALTER TABLE sales ADD COLUMN IF NOT EXISTS sale_type TEXT DEFAULT 'retail'`);
+      await db.query(`ALTER TABLE sales ADD COLUMN IF NOT EXISTS transaction_type TEXT DEFAULT 'cash'`);
+      console.log("✓ Sale type columns added to sales");
+    } catch (e) {
+      console.log("Note: Sales columns may already exist");
+    }
+    
     // Create subscription_payments table
     await db.query(`CREATE TABLE IF NOT EXISTS subscription_payments (
       id SERIAL PRIMARY KEY,
