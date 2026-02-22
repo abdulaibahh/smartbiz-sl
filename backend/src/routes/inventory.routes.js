@@ -173,7 +173,75 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
   console.log("[INVENTORY] Body:", req.body);
   console.log("[INVENTORY] User:", req.user);
   
-  const { product, quantity, cost_price, selling_price, stock_type } = req.body;
+  const { id, product, quantity, cost_price, selling_price, stock_type, retail_quantity, wholesale_quantity, retail_price, wholesale_price } = req.body;
+
+  // If ID is provided, this is an update operation (from edit modal)
+  if (id) {
+    console.log("[INVENTORY] Update operation with ID:", id);
+    try {
+      const updates = [];
+      const params = [];
+      let paramIndex = 1;
+
+      // If stock_type is 'both', set absolute quantities
+      if (stock_type === 'both') {
+        if (retail_quantity !== undefined) {
+          updates.push(`retail_quantity = $${paramIndex++}`);
+          params.push(retail_quantity);
+        }
+        if (wholesale_quantity !== undefined) {
+          updates.push(`wholesale_quantity = $${paramIndex++}`);
+          params.push(wholesale_quantity);
+        }
+      } else if (quantity !== undefined && quantity > 0) {
+        const isRetail = stock_type === 'retail' || !stock_type;
+        const isWholesale = stock_type === 'wholesale';
+        if (isRetail) {
+          updates.push(`retail_quantity = COALESCE(retail_quantity, 0) + $${paramIndex++}`);
+          params.push(quantity);
+        }
+        if (isWholesale) {
+          updates.push(`wholesale_quantity = COALESCE(wholesale_quantity, 0) + $${paramIndex++}`);
+          params.push(quantity);
+        }
+      }
+
+      if (cost_price !== undefined) {
+        updates.push(`cost_price = $${paramIndex++}`);
+        params.push(cost_price);
+      }
+      if (selling_price !== undefined) {
+        updates.push(`selling_price = $${paramIndex++}`);
+        params.push(selling_price);
+      }
+      if (retail_price !== undefined) {
+        updates.push(`retail_price = $${paramIndex++}`);
+        params.push(retail_price);
+      }
+      if (wholesale_price !== undefined) {
+        updates.push(`wholesale_price = $${paramIndex++}`);
+        params.push(wholesale_price);
+      }
+
+      if (updates.length > 0) {
+        updates.push(`updated_at = NOW()`);
+        params.push(id, req.user.business_id);
+        const query = `UPDATE inventory SET ${updates.join(", ")} WHERE id = $${paramIndex++} AND business_id = $${paramIndex}`;
+        console.log("[INVENTORY] Update query:", query);
+        console.log("[INVENTORY] Update params:", params);
+        const result = await db.query(query, params);
+        if (result.rowCount === 0) {
+          return res.status(404).json({ message: "Item not found" });
+        }
+        console.log("[INVENTORY] Update success!");
+        return res.json({ message: "Inventory updated" });
+      }
+      return res.json({ message: "No changes to update" });
+    } catch (err) {
+      console.error("[INVENTORY] Update error:", err);
+      return res.status(500).json({ message: "Failed to update inventory: " + err.message });
+    }
+  }
 
   if (!product || !quantity) {
     console.log("[INVENTORY] Missing product or quantity");
@@ -202,27 +270,27 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
       let paramIndex = 1;
 
       if (isRetail) {
-        updates.push(`retail_quantity = COALESCE(retail_quantity, 0) + ${paramIndex++}`);
+        updates.push(`retail_quantity = COALESCE(retail_quantity, 0) + $${paramIndex++}`);
         params.push(quantity);
       }
       if (isWholesale) {
-        updates.push(`wholesale_quantity = COALESCE(wholesale_quantity, 0) + ${paramIndex++}`);
+        updates.push(`wholesale_quantity = COALESCE(wholesale_quantity, 0) + $${paramIndex++}`);
         params.push(quantity);
       }
       if (cost_price !== undefined) {
-        updates.push(`cost_price = ${paramIndex++}`);
+        updates.push(`cost_price = $${paramIndex++}`);
         params.push(cost_price);
       }
       if (selling_price !== undefined) {
         // Always update selling_price for backward compatibility
-        updates.push(`selling_price = ${paramIndex++}`);
+        updates.push(`selling_price = $${paramIndex++}`);
         params.push(selling_price);
         if (isRetail) {
-          updates.push(`retail_price = ${paramIndex++}`);
+          updates.push(`retail_price = $${paramIndex++}`);
           params.push(selling_price);
         }
         if (isWholesale) {
-          updates.push(`wholesale_price = ${paramIndex++}`);
+          updates.push(`wholesale_price = $${paramIndex++}`);
           params.push(selling_price);
         }
       }
@@ -259,6 +327,10 @@ router.put("/:id", auth, async (req, res) => {
   const { id } = req.params;
   const { quantity, cost_price, selling_price, retail_quantity, wholesale_quantity, retail_price, wholesale_price } = req.body;
 
+  console.log("[UPDATE] Request params:", req.params);
+  console.log("[UPDATE] Request body:", req.body);
+  console.log("[UPDATE] User business_id:", req.user?.business_id);
+
   try {
     // First, ensure columns exist
     try {
@@ -270,51 +342,48 @@ router.put("/:id", auth, async (req, res) => {
       // Columns might already exist
     }
 
+    // Build updates array and params array separately
     const updates = [];
     const params = [];
 
-    if (retail_quantity !== undefined) {
-      updates.push(`retail_quantity = ${params.length + 1}`);
-      params.push(retail_quantity);
-    }
-    if (wholesale_quantity !== undefined) {
-      updates.push(`wholesale_quantity = ${params.length + 1}`);
-      params.push(wholesale_quantity);
-    }
-    if (cost_price !== undefined) {
-      updates.push(`cost_price = ${params.length + 1}`);
-      params.push(cost_price);
-    }
-    if (retail_price !== undefined) {
-      updates.push(`retail_price = ${params.length + 1}`);
-      params.push(retail_price);
-    }
-    if (wholesale_price !== undefined) {
-      updates.push(`wholesale_price = ${params.length + 1}`);
-      params.push(wholesale_price);
-    }
+    // Helper function to add update and param
+    const addUpdate = (field, value) => {
+      if (value !== undefined) {
+        updates.push(`${field} = $${params.length + 1}`);
+        params.push(value);
+      }
+    };
+
+    // Add all possible updates
+    addUpdate('retail_quantity', retail_quantity);
+    addUpdate('wholesale_quantity', wholesale_quantity);
+    addUpdate('cost_price', cost_price);
+    addUpdate('retail_price', retail_price);
+    addUpdate('wholesale_price', wholesale_price);
+    
     if (selling_price !== undefined) {
       // Backward compatibility - set both prices
-      updates.push(`retail_price = ${params.length + 1}`);
+      updates.push(`retail_price = $${params.length + 1}`);
       params.push(selling_price);
-      updates.push(`wholesale_price = ${params.length + 1}`);
+      updates.push(`wholesale_price = $${params.length + 1}`);
       params.push(selling_price);
     }
     
     if (updates.length > 0) {
       updates.push(`updated_at = NOW()`);
       
-      // Add id and business_id to params
-      const idParamIndex = params.length + 1;
-      const businessIdParamIndex = params.length + 2;
+      // Add id and business_id to params at the end
       params.push(id, req.user.business_id);
       
-      const query = `UPDATE inventory SET ${updates.join(", ")} WHERE id = ${idParamIndex} AND business_id = ${businessIdParamIndex}`;
+      // Use $1, $2, $3... based on actual params position
+      const query = `UPDATE inventory SET ${updates.join(", ")} WHERE id = $${params.length - 1} AND business_id = $${params.length}`;
       
       console.log("[UPDATE] Query:", query);
       console.log("[UPDATE] Params:", params);
       
       const result = await db.query(query, params);
+      
+      console.log("[UPDATE] Result rowCount:", result.rowCount);
       
       if (result.rowCount === 0) {
         return res.status(404).json({ message: "Item not found" });
@@ -323,7 +392,7 @@ router.put("/:id", auth, async (req, res) => {
     
     res.json({ message: "Inventory updated" });
   } catch (err) {
-    console.error(err);
+    console.error("[UPDATE] Error:", err);
     res.status(500).json({ message: "Failed to update inventory: " + err.message });
   }
 });
