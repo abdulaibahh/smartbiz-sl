@@ -10,7 +10,20 @@ router.get("/all", auth, async (req, res) => {
   console.log("[INVENTORY] Business ID:", req.user?.business_id);
   
   try {
-    // First, ensure retail/wholesale columns exist and copy data from legacy columns
+    // First, add columns if they don't exist
+    try {
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_quantity INTEGER DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_quantity INTEGER DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_cost_price NUMERIC DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_cost_price NUMERIC DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_price NUMERIC DEFAULT 0`);
+      await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_price NUMERIC DEFAULT 0`);
+      console.log("[INVENTORY] Columns added successfully");
+    } catch (colErr) {
+      console.log("[INVENTORY] Columns note:", colErr.message);
+    }
+    
+    // Now copy data from legacy columns to new columns
     try {
       await db.query(`
         UPDATE inventory SET 
@@ -21,10 +34,11 @@ router.get("/all", auth, async (req, res) => {
           retail_price = COALESCE(retail_price, selling_price),
           wholesale_price = COALESCE(wholesale_price, selling_price)
         WHERE business_id = $1
+          AND (retail_price IS NULL OR retail_price = 0 OR wholesale_price IS NULL OR wholesale_price = 0)
       `, [req.user.business_id]);
-    } catch (colErr) {
-      // Columns might not exist yet, continue anyway
-      console.log("[INVENTORY] Column migration note:", colErr.message);
+      console.log("[INVENTORY] Data migrated successfully");
+    } catch (migErr) {
+      console.log("[INVENTORY] Migration note:", migErr.message);
     }
     
     const inventory = await db.query(
@@ -32,6 +46,12 @@ router.get("/all", auth, async (req, res) => {
       [req.user.business_id]
     );
     console.log("[INVENTORY] Found:", inventory.rows.length, "items");
+    
+    // Log first item to debug
+    if (inventory.rows.length > 0) {
+      console.log("[INVENTORY] First item sample:", JSON.stringify(inventory.rows[0]));
+    }
+    
     res.json(inventory.rows);
   } catch (err) {
     console.error("[INVENTORY] Get inventory error:", err);
@@ -53,22 +73,19 @@ router.post("/retail", auth, sub, async (req, res) => {
       [req.user.business_id, product]
     );
 
+    // Use retail_price as selling_price if not provided
+    const price = retail_price || 0;
+    const cost = cost_price || 0;
+
     if (existing.rows.length) {
-      if (retail_price !== undefined) {
-        await db.query(
-          "UPDATE inventory SET retail_quantity = COALESCE(retail_quantity, 0) + $1, retail_price = $2, cost_price = COALESCE(cost_price, $2), updated_at = NOW() WHERE business_id = $3 AND product = $4",
-          [quantity, retail_price, req.user.business_id, product]
-        );
-      } else {
-        await db.query(
-          "UPDATE inventory SET retail_quantity = COALESCE(retail_quantity, 0) + $1, updated_at = NOW() WHERE business_id = $2 AND product = $3",
-          [quantity, req.user.business_id, product]
-        );
-      }
+      await db.query(
+        "UPDATE inventory SET retail_quantity = COALESCE(retail_quantity, 0) + $1, retail_price = $2, selling_price = $2, cost_price = $3, wholesale_price = COALESCE(wholesale_price, $2), updated_at = NOW() WHERE business_id = $4 AND product = $5",
+        [quantity, price, cost, req.user.business_id, product]
+      );
     } else {
       await db.query(
-        "INSERT INTO inventory(business_id, product, retail_quantity, cost_price, retail_price, updated_at) VALUES($1, $2, $3, $4, $5, NOW())",
-        [req.user.business_id, product, quantity, cost_price || 0, retail_price || 0]
+        "INSERT INTO inventory(business_id, product, retail_quantity, cost_price, retail_price, selling_price, wholesale_price, quantity, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5, $3, NOW())",
+        [req.user.business_id, product, quantity, cost, price]
       );
     }
 
@@ -93,22 +110,19 @@ router.post("/wholesale", auth, sub, async (req, res) => {
       [req.user.business_id, product]
     );
 
+    // Use wholesale_price as selling_price if not provided
+    const price = wholesale_price || 0;
+    const cost = cost_price || 0;
+
     if (existing.rows.length) {
-      if (wholesale_price !== undefined) {
-        await db.query(
-          "UPDATE inventory SET wholesale_quantity = COALESCE(wholesale_quantity, 0) + $1, wholesale_price = $2, cost_price = COALESCE(cost_price, $2), updated_at = NOW() WHERE business_id = $3 AND product = $4",
-          [quantity, wholesale_price, req.user.business_id, product]
-        );
-      } else {
-        await db.query(
-          "UPDATE inventory SET wholesale_quantity = COALESCE(wholesale_quantity, 0) + $1, updated_at = NOW() WHERE business_id = $2 AND product = $3",
-          [quantity, req.user.business_id, product]
-        );
-      }
+      await db.query(
+        "UPDATE inventory SET wholesale_quantity = COALESCE(wholesale_quantity, 0) + $1, wholesale_price = $2, selling_price = $2, cost_price = $3, retail_price = COALESCE(retail_price, $2), updated_at = NOW() WHERE business_id = $4 AND product = $5",
+        [quantity, price, cost, req.user.business_id, product]
+      );
     } else {
       await db.query(
-        "INSERT INTO inventory(business_id, product, wholesale_quantity, cost_price, wholesale_price, updated_at) VALUES($1, $2, $3, $4, $5, NOW())",
-        [req.user.business_id, product, quantity, cost_price || 0, wholesale_price || 0]
+        "INSERT INTO inventory(business_id, product, wholesale_quantity, cost_price, wholesale_price, selling_price, retail_price, quantity, updated_at) VALUES($1, $2, $3, $4, $5, $5, $5, $3, NOW())",
+        [req.user.business_id, product, quantity, cost, price]
       );
     }
 
@@ -154,24 +168,27 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
       let paramIndex = 1;
 
       if (isRetail) {
-        updates.push(`retail_quantity = COALESCE(retail_quantity, 0) + $${paramIndex++}`);
+        updates.push(`retail_quantity = COALESCE(retail_quantity, 0) + ${paramIndex++}`);
         params.push(quantity);
       }
       if (isWholesale) {
-        updates.push(`wholesale_quantity = COALESCE(wholesale_quantity, 0) + $${paramIndex++}`);
+        updates.push(`wholesale_quantity = COALESCE(wholesale_quantity, 0) + ${paramIndex++}`);
         params.push(quantity);
       }
       if (cost_price !== undefined) {
-        updates.push(`cost_price = $${paramIndex++}`);
+        updates.push(`cost_price = ${paramIndex++}`);
         params.push(cost_price);
       }
       if (selling_price !== undefined) {
+        // Always update selling_price for backward compatibility
+        updates.push(`selling_price = ${paramIndex++}`);
+        params.push(selling_price);
         if (isRetail) {
-          updates.push(`retail_price = $${paramIndex++}`);
+          updates.push(`retail_price = ${paramIndex++}`);
           params.push(selling_price);
         }
         if (isWholesale) {
-          updates.push(`wholesale_price = $${paramIndex++}`);
+          updates.push(`wholesale_price = ${paramIndex++}`);
           params.push(selling_price);
         }
       }
@@ -190,7 +207,7 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
       const wholesalePrice = selling_price || 0;
       
       await db.query(
-        "INSERT INTO inventory(business_id, product, retail_quantity, wholesale_quantity, cost_price, retail_price, wholesale_price, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, NOW())",
+        "INSERT INTO inventory(business_id, product, retail_quantity, wholesale_quantity, cost_price, retail_price, wholesale_price, selling_price, quantity, updated_at) VALUES($1, $2, $3, $4, $5, $6, $7, $6, $3, NOW())",
         [req.user.business_id, product, retailQty, wholesaleQty, cost_price || 0, retailPrice, wholesalePrice]
       );
     }
