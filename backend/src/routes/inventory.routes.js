@@ -3,6 +3,40 @@ const db = require("../config/db");
 const auth = require("../middlewares/auth");
 const sub = require("../middlewares/subscription");
 
+// Quick fix endpoint to add missing columns
+router.get("/fix-columns", async (req, res) => {
+  try {
+    console.log("[INVENTORY] Running column fix...");
+    
+    // Add retail and wholesale columns to inventory table
+    await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_quantity INTEGER DEFAULT 0`);
+    await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_quantity INTEGER DEFAULT 0`);
+    await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_cost_price NUMERIC DEFAULT 0`);
+    await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_cost_price NUMERIC DEFAULT 0`);
+    await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS retail_price NUMERIC DEFAULT 0`);
+    await db.query(`ALTER TABLE inventory ADD COLUMN IF NOT EXISTS wholesale_price NUMERIC DEFAULT 0`);
+    
+    // Copy data from legacy columns
+    await db.query(`UPDATE inventory SET 
+      retail_quantity = COALESCE(retail_quantity, quantity),
+      wholesale_quantity = COALESCE(wholesale_quantity, 0),
+      retail_cost_price = COALESCE(retail_cost_price, cost_price),
+      wholesale_cost_price = COALESCE(wholesale_cost_price, 0),
+      retail_price = COALESCE(retail_price, selling_price),
+      wholesale_price = COALESCE(wholesale_price, selling_price)
+    WHERE retail_price IS NULL OR retail_price = 0`);
+    
+    // Add sale_type to sales table
+    await db.query(`ALTER TABLE sales ADD COLUMN IF NOT EXISTS sale_type TEXT DEFAULT 'retail'`);
+    
+    console.log("[INVENTORY] Column fix complete!");
+    res.json({ message: "Columns added and data migrated successfully!" });
+  } catch (err) {
+    console.error("[INVENTORY] Fix error:", err.message);
+    res.status(500).json({ message: "Fix failed: " + err.message });
+  }
+});
+
 // Get all inventory
 router.get("/all", auth, async (req, res) => {
   console.log("[INVENTORY] GET /all - Request received");
