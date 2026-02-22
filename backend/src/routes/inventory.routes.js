@@ -401,7 +401,37 @@ router.put("/:id", auth, async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
   const { id } = req.params;
 
+  console.log("[DELETE] Attempting to delete inventory item:", id);
+  console.log("[DELETE] User business_id:", req.user?.business_id);
+
   try {
+    // First, check if there are related records in sales_items
+    const salesCheck = await db.query(
+      "SELECT COUNT(*) as count FROM sales_items WHERE product_id = $1",
+      [id]
+    );
+    console.log("[DELETE] Related sales_items count:", salesCheck.rows[0]?.count);
+
+    // Check if there are related records in order_items
+    const ordersCheck = await db.query(
+      "SELECT COUNT(*) as count FROM order_items WHERE product_id = $1",
+      [id]
+    );
+    console.log("[DELETE] Related order_items count:", ordersCheck.rows[0]?.count);
+
+    // Delete related sales_items first
+    if (salesCheck.rows[0]?.count > 0) {
+      await db.query("DELETE FROM sales_items WHERE product_id = $1", [id]);
+      console.log("[DELETE] Deleted related sales_items");
+    }
+
+    // Delete related order_items first
+    if (ordersCheck.rows[0]?.count > 0) {
+      await db.query("DELETE FROM order_items WHERE product_id = $1", [id]);
+      console.log("[DELETE] Deleted related order_items");
+    }
+
+    // Now delete the inventory item
     const result = await db.query(
       "DELETE FROM inventory WHERE id=$1 AND business_id=$2",
       [id, req.user.business_id]
@@ -411,9 +441,10 @@ router.delete("/:id", auth, async (req, res) => {
       return res.status(404).json({ message: "Item not found" });
     }
     
+    console.log("[DELETE] Item deleted successfully");
     res.json({ message: "Item deleted" });
   } catch (err) {
-    console.error(err);
+    console.error("[DELETE] Error:", err);
     res.status(500).json({ message: "Failed to delete item: " + err.message });
   }
 });
