@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useLanguage } from "@/providers/LanguageContext";
 import { salesAPI, debtAPI, inventoryAPI } from "@/services/api";
 import { 
   TrendingUp, 
@@ -50,6 +51,7 @@ const formatDate = (date) => {
 };
 
 function DashboardContent() {
+  const { t } = useLanguage();
   const [sales, setSales] = useState([]);
   const [debts, setDebts] = useState([]);
   const [inventory, setInventory] = useState([]);
@@ -197,7 +199,7 @@ function DashboardContent() {
         <div className="bg-zinc-900/80 backdrop-blur-lg border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-zinc-500 text-sm">Today's Sales</p>
+              <p className="text-zinc-500 text-sm">{t('dashboard.todaysSales')}</p>
               <p className="text-2xl font-bold text-white mt-1">
                 {formatCurrency(stats.todayRevenue)}
               </p>
@@ -211,7 +213,7 @@ function DashboardContent() {
               <ArrowUpRight size={16} />
               {stats.todaySalesCount}
             </span>
-            <span className="text-zinc-500">transactions today</span>
+            <span className="text-zinc-500">{t('dashboard.transactionsToday')}</span>
           </div>
         </div>
 
@@ -219,7 +221,7 @@ function DashboardContent() {
         <div className="bg-zinc-900/80 backdrop-blur-lg border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-zinc-500 text-sm">Total Revenue</p>
+              <p className="text-zinc-500 text-sm">{t('dashboard.totalRevenue')}</p>
               <p className="text-2xl font-bold text-white mt-1">
                 {formatCurrency(stats.totalRevenue)}
               </p>
@@ -229,7 +231,7 @@ function DashboardContent() {
             </div>
           </div>
           <div className="flex items-center gap-1 mt-3 text-sm">
-            <span className="text-zinc-500">{stats.salesCount} total transactions</span>
+            <span className="text-zinc-500">{stats.salesCount} {t('dashboard.totalTransactions')}</span>
           </div>
         </div>
 
@@ -237,7 +239,7 @@ function DashboardContent() {
         <div className="bg-zinc-900/80 backdrop-blur-lg border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-zinc-500 text-sm">Pending Debts</p>
+              <p className="text-zinc-500 text-sm">{t('dashboard.pendingDebts')}</p>
               <p className="text-2xl font-bold text-white mt-1">
                 {formatCurrency(stats.totalDebts)}
               </p>
@@ -247,7 +249,7 @@ function DashboardContent() {
             </div>
           </div>
           <div className="flex items-center gap-1 mt-3 text-sm">
-            <span className="text-zinc-500">{debts.length} outstanding</span>
+            <span className="text-zinc-500">{debts.length} {t('dashboard.outstanding')}</span>
           </div>
         </div>
 
@@ -255,7 +257,7 @@ function DashboardContent() {
         <div className="bg-zinc-900/80 backdrop-blur-lg border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-zinc-500 text-sm">Inventory Items</p>
+              <p className="text-zinc-500 text-sm">{t('dashboard.inventoryItems')}</p>
               <p className="text-2xl font-bold text-white mt-1">
                 {stats.inventoryCount}
               </p>
@@ -265,7 +267,7 @@ function DashboardContent() {
             </div>
           </div>
           <div className="flex items-center gap-1 mt-3 text-sm">
-            <span className="text-zinc-500">products tracked</span>
+            <span className="text-zinc-500">{t('dashboard.productsTracked')}</span>
           </div>
         </div>
       </div>
@@ -275,8 +277,8 @@ function DashboardContent() {
         {/* Sales Chart */}
         <div className="lg:col-span-2 bg-zinc-900/80 backdrop-blur-lg border border-zinc-800 rounded-2xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Revenue Overview</h3>
-            <span className="text-sm text-zinc-500">Last 7 days</span>
+            <h3 className="text-lg font-semibold text-white">{t('dashboard.revenueOverview')}</h3>
+            <span className="text-sm text-zinc-500">{t('dashboard.last7Days')}</span>
           </div>
           <div className="h-64">
             <Line data={chartData} options={chartOptions} />
@@ -285,7 +287,7 @@ function DashboardContent() {
 
         {/* Recent Sales */}
         <div className="bg-zinc-900/80 backdrop-blur-lg border border-zinc-800 rounded-2xl p-5">
-          <h3 className="text-lg font-semibold text-white mb-4">Recent Sales</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">{t('dashboard.recentSales')}</h3>
           <div className="space-y-3">
             {recentSales.length > 0 ? (
               recentSales.map((sale, idx) => (
@@ -296,7 +298,7 @@ function DashboardContent() {
                     </div>
                     <div>
                       <p className="text-sm font-medium text-white">
-                        {sale.customer || "Walk-in Customer"}
+                        {sale.customer || t('sales.walkInCustomer')}
                       </p>
                       <p className="text-xs text-zinc-500">
                         {formatDate(sale.created_at)}
@@ -311,7 +313,7 @@ function DashboardContent() {
             ) : (
               <div className="text-center py-8 text-zinc-500">
                 <Receipt size={32} className="mx-auto mb-2 opacity-50" />
-                <p className="text-sm">No sales yet</p>
+                <p className="text-sm">{t('dashboard.noSalesYet')}</p>
               </div>
             )}
           </div>
@@ -320,23 +322,23 @@ function DashboardContent() {
 
       {/* Quick Actions */}
       <div className="bg-zinc-900/80 backdrop-blur-lg border border-zinc-800 rounded-2xl p-5">
-        <h3 className="text-lg font-semibold text-white mb-4">Quick Actions</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('dashboard.quickActions')}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <a href="/sales" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 transition-colors">
             <Receipt className="text-indigo-400" size={24} />
-            <span className="text-sm font-medium text-white">New Sale</span>
+            <span className="text-sm font-medium text-white">{t('dashboard.newSale')}</span>
           </a>
           <a href="/inventory/add" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-emerald-600/20 hover:bg-emerald-600/30 transition-colors">
             <Package className="text-emerald-400" size={24} />
-            <span className="text-sm font-medium text-white">Add Stock</span>
+            <span className="text-sm font-medium text-white">{t('dashboard.addStock')}</span>
           </a>
           <a href="/debt" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-amber-600/20 hover:bg-amber-600/30 transition-colors">
             <ShoppingCart className="text-amber-400" size={24} />
-            <span className="text-sm font-medium text-white">Record Debt</span>
+            <span className="text-sm font-medium text-white">{t('dashboard.recordDebt')}</span>
           </a>
           <a href="/ai" className="flex flex-col items-center gap-2 p-4 rounded-xl bg-purple-600/20 hover:bg-purple-600/30 transition-colors">
             <TrendingUp className="text-purple-400" size={24} />
-            <span className="text-sm font-medium text-white">Ask AI</span>
+            <span className="text-sm font-medium text-white">{t('dashboard.askAI')}</span>
           </a>
         </div>
       </div>

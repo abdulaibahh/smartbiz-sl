@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useLanguage } from "@/providers/LanguageContext";
 import { inventoryAPI } from "@/services/api";
 import { Package, Search, Plus, Minus, Trash2, DollarSign, Edit2, X, Store, Building2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { formatCurrency } from "@/lib/currency";
 
 function InventoryContent() {
+  const { t } = useLanguage();
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -192,11 +194,11 @@ function InventoryContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Inventory</h1>
+          <h1 className="text-2xl font-bold text-white">{t('inventory.title')}</h1>
           <p className="text-zinc-500">
-            {inventory.length} products | 
-            <span className="text-emerald-400 ml-2">Retail: {totalRetailItems}</span> | 
-            <span className="text-blue-400 ml-2">Wholesale: {totalWholesaleItems}</span>
+            {inventory.length} {t('inventory.products')} | 
+            <span className="text-emerald-400 ml-2">{t('inventory.retailStock')}: {totalRetailItems}</span> | 
+            <span className="text-blue-400 ml-2">{t('inventory.wholesaleStock')}: {totalWholesaleItems}</span>
           </p>
         </div>
         <button
@@ -204,7 +206,7 @@ function InventoryContent() {
           className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors"
         >
           <Plus size={20} />
-          Add Product
+          {t('inventory.addProduct')}
         </button>
       </div>
 
@@ -219,7 +221,7 @@ function InventoryContent() {
           }`}
         >
           <Store size={18} />
-          Retail Stock
+          {t('inventory.retailStock')}
         </button>
         <button
           onClick={() => setStockType('wholesale')}
@@ -230,7 +232,7 @@ function InventoryContent() {
           }`}
         >
           <Building2 size={18} />
-          Wholesale Stock
+          {t('inventory.wholesaleStock')}
         </button>
       </div>
 
@@ -239,7 +241,7 @@ function InventoryContent() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
         <input
           type="text"
-          placeholder="Search products..."
+          placeholder={t('inventory.searchProducts')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
@@ -281,8 +283,8 @@ function InventoryContent() {
                   {stockType === 'retail' ? (item.retail_quantity || 0) : (item.wholesale_quantity || 0)}
                 </div>
                 <div className="flex gap-3 text-xs text-zinc-500">
-                  <span>Retail: {item.retail_quantity || 0}</span>
-                  <span>Wholesale: {item.wholesale_quantity || 0}</span>
+                  <span>{t('inventory.retailStock')}: {item.retail_quantity || 0}</span>
+                  <span>{t('inventory.wholesaleStock')}: {item.wholesale_quantity || 0}</span>
                 </div>
               </div>
               
@@ -290,13 +292,13 @@ function InventoryContent() {
               {(item.retail_price > 0 || item.wholesale_price > 0 || item.cost_price > 0) && (
                 <div className="text-sm text-zinc-400 mb-3 space-y-1">
                   {item.cost_price > 0 && (
-                    <p>Cost: {formatCurrency(item.cost_price)}</p>
+                    <p>{t('inventory.costPrice')}: {formatCurrency(item.cost_price)}</p>
                   )}
                   {item.retail_price > 0 && (
-                    <p className="text-green-400">Retail Price: {formatCurrency(item.retail_price)}</p>
+                    <p className="text-green-400">{t('inventory.retailPrice')}: {formatCurrency(item.retail_price)}</p>
                   )}
                   {item.wholesale_price > 0 && (
-                    <p className="text-blue-400">Wholesale Price: {formatCurrency(item.wholesale_price)}</p>
+                    <p className="text-blue-400">{t('inventory.wholesalePrice')}: {formatCurrency(item.wholesale_price)}</p>
                   )}
                 </div>
               )}
@@ -308,14 +310,14 @@ function InventoryContent() {
                   className="p-2 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors text-xs flex items-center justify-center gap-1"
                 >
                   <Plus size={14} />
-                  Add Retail
+                  {t('inventory.addRetail')}
                 </button>
                 <button
                   onClick={() => handleAddWholesaleStock(item, 1)}
                   className="p-2 rounded-lg bg-blue-500/20 text-blue-400 hover:bg-blue-500/30 transition-colors text-xs flex items-center justify-center gap-1"
                 >
                   <Plus size={14} />
-                  Add Wholesale
+                  {t('inventory.addWholesale')}
                 </button>
               </div>
               
@@ -340,12 +342,12 @@ function InventoryContent() {
       ) : (
         <div className="text-center py-16 bg-zinc-900/50 rounded-2xl border border-zinc-800">
           <Package size={48} className="mx-auto mb-4 text-zinc-600" />
-          <p className="text-zinc-500">No products in inventory</p>
+          <p className="text-zinc-500">{t('inventory.noProducts')}</p>
           <button
             onClick={() => setShowModal(true)}
             className="mt-4 text-indigo-400 hover:text-indigo-300 font-medium"
           >
-            Add your first product
+            {t('inventory.addFirstProduct')}
           </button>
         </div>
       )}
@@ -354,13 +356,13 @@ function InventoryContent() {
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold text-white mb-4">Add Product</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">{t('inventory.addProduct')}</h2>
             <form onSubmit={handleAddItem} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Product Name</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.productName')}</label>
                 <input
                   type="text"
-                  placeholder="Enter product name"
+                  placeholder={t('inventory.productName')}
                   value={newItem.product}
                   onChange={(e) => setNewItem({ ...newItem, product: e.target.value })}
                   required
@@ -368,7 +370,7 @@ function InventoryContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Initial Quantity</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.initialQuantity')}</label>
                 <input
                   type="number"
                   min="0"
@@ -378,7 +380,7 @@ function InventoryContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Cost Price</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.costPrice')}</label>
                 <input
                   type="number"
                   min="0"
@@ -390,7 +392,7 @@ function InventoryContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Retail Price</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.retailPrice')}</label>
                 <input
                   type="number"
                   min="0"
@@ -402,7 +404,7 @@ function InventoryContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Wholesale Price</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.wholesalePrice')}</label>
                 <input
                   type="number"
                   min="0"
@@ -419,13 +421,13 @@ function InventoryContent() {
                   onClick={() => setShowModal(false)}
                   className="flex-1 py-3 rounded-xl bg-zinc-800 text-white font-medium hover:bg-zinc-700 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors"
                 >
-                  Add Product
+                  {t('inventory.addProduct')}
                 </button>
               </div>
             </form>
@@ -438,7 +440,7 @@ function InventoryContent() {
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-white">Edit Product</h2>
+              <h2 className="text-xl font-semibold text-white">{t('inventory.editProduct')}</h2>
               <button
                 onClick={() => setShowEditModal(false)}
                 className="p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors"
@@ -448,10 +450,10 @@ function InventoryContent() {
             </div>
             <form onSubmit={handleUpdateItem} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Product Name</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.productName')}</label>
                 <input
                   type="text"
-                  placeholder="Enter product name"
+                  placeholder={t('inventory.productName')}
                   value={editForm.product}
                   onChange={(e) => setEditForm({ ...editForm, product: e.target.value })}
                   required
@@ -460,7 +462,7 @@ function InventoryContent() {
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-2">Retail Quantity</label>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.retailQuantity')}</label>
                   <input
                     type="number"
                     min="0"
@@ -470,7 +472,7 @@ function InventoryContent() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-zinc-400 mb-2">Wholesale Quantity</label>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.wholesaleQuantity')}</label>
                   <input
                     type="number"
                     min="0"
@@ -481,7 +483,7 @@ function InventoryContent() {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Cost Price</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.costPrice')}</label>
                 <input
                   type="number"
                   min="0"
@@ -493,7 +495,7 @@ function InventoryContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Retail Price</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.retailPrice')}</label>
                 <input
                   type="number"
                   min="0"
@@ -505,7 +507,7 @@ function InventoryContent() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Wholesale Price</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.wholesalePrice')}</label>
                 <input
                   type="number"
                   min="0"
@@ -522,13 +524,13 @@ function InventoryContent() {
                   onClick={() => setShowEditModal(false)}
                   className="flex-1 py-3 rounded-xl bg-zinc-800 text-white font-medium hover:bg-zinc-700 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-3 rounded-xl bg-indigo-600 text-white font-medium hover:bg-indigo-500 transition-colors"
                 >
-                  Save Changes
+                  {t('inventory.saveChanges')}
                 </button>
               </div>
             </form>

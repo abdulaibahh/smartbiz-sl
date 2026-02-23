@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useLanguage } from "@/providers/LanguageContext";
 import { salesAPI, inventoryAPI, customerAPI } from "@/services/api";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -12,6 +13,7 @@ import {
 import { formatCurrency } from "@/lib/currency";
 
 function SalesContent() {
+  const { t } = useLanguage();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("new-sale");
@@ -297,8 +299,8 @@ function SalesContent() {
           <ShoppingCart className="text-indigo-400" size={24} />
         </div>
         <div className="flex-1">
-          <h1 className="text-xl font-semibold text-white">Sales</h1>
-          <p className="text-sm text-zinc-500">Manage sales and transactions</p>
+          <h1 className="text-xl font-semibold text-white">{t('sales.title')}</h1>
+          <p className="text-sm text-zinc-500">{t('sales.salesHistory')}</p>
         </div>
       </div>
 
@@ -311,7 +313,7 @@ function SalesContent() {
           }`}
         >
           <Plus size={18} />
-          New Sale
+          {t('sales.newSale')}
         </button>
         <button
           onClick={() => setActiveTab('history')}
@@ -320,7 +322,7 @@ function SalesContent() {
           }`}
         >
           <Clock size={18} />
-          Transaction History
+          {t('sales.salesHistory')}
         </button>
       </div>
 
@@ -372,7 +374,7 @@ function SalesContent() {
               }`}
             >
               <Store size={18} />
-              Retail Sale
+              {t('common.retail')} {t('sales.title')}
             </button>
             <button
               onClick={() => {
@@ -384,7 +386,7 @@ function SalesContent() {
               }`}
             >
               <Building2 size={18} />
-              Wholesale Sale
+              {t('common.wholesale')} {t('sales.title')}
             </button>
           </div>
 
@@ -417,19 +419,19 @@ function SalesContent() {
                           <div>
                             <p className="text-white font-medium">{product.product}</p>
                             <p className="text-sm text-zinc-500">
-                              Stock: {getAvailableStock(product)} ({saleType})
+                              {t('common.stock')}: {getAvailableStock(product)} ({saleType})
                             </p>
                           </div>
                           <div className="text-right">
                             <p className={`font-medium ${saleType === 'retail' ? 'text-emerald-400' : 'text-blue-400'}`}>
                               {formatCurrency(getPrice(product))}
                             </p>
-                            <p className="text-xs text-zinc-500">per unit</p>
+                            <p className="text-xs text-zinc-500">{t('common.per')} unit</p>
                           </div>
                         </button>
                       ))
                     ) : (
-                      <p className="text-zinc-500 text-center py-4">No products found</p>
+                      <p className="text-zinc-500 text-center py-4">{t('common.noResults')}</p>
                     )}
                   </div>
                 )}
@@ -437,7 +439,7 @@ function SalesContent() {
 
               {/* Cart Items */}
               <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4">
-                <h3 className="text-lg font-semibold text-white mb-4">Cart ({cart.length} items)</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">{t('sales.cart')} ({cart.length} {t('common.items')})</h3>
                 
                 {cart.length > 0 ? (
                   <div className="space-y-3">
@@ -479,8 +481,8 @@ function SalesContent() {
                 ) : (
                   <div className="text-center py-8 text-zinc-500">
                     <ShoppingCart size={32} className="mx-auto mb-2 opacity-50" />
-                    <p>No items in cart</p>
-                    <p className="text-sm">Search and add products above</p>
+                    <p>{t('sales.noItems')}</p>
+                    <p className="text-sm">{t('sales.addProducts')}</p>
                   </div>
                 )}
               </div>
@@ -490,12 +492,12 @@ function SalesContent() {
             <div className="space-y-4">
               {/* Customer Selection */}
               <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-4">
-                <label className="block text-sm font-medium text-zinc-400 mb-2">Customer</label>
+                <label className="block text-sm font-medium text-zinc-400 mb-2">{t('sales.selectCustomer')}</label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                   <input
                     type="text"
-                    placeholder="Search or enter customer..."
+                    placeholder={t('sales.walkInCustomer')}
                     value={form.customerName}
                     onChange={(e) => {
                       setForm({ ...form, customerName: e.target.value, selectedCustomer: null });
@@ -527,18 +529,18 @@ function SalesContent() {
                 <div className={`text-sm font-medium mb-3 px-3 py-2 rounded-lg ${
                   saleType === 'retail' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-blue-500/20 text-blue-400'
                 }`}>
-                  {saleType === 'retail' ? 'Retail Sale' : 'Wholesale Sale'}
+                  {saleType === 'retail' ? t('common.retail') : t('common.wholesale')} {t('sales.title')}
                 </div>
                 
-                <h3 className="text-lg font-semibold text-white mb-4">Payment</h3>
+                <h3 className="text-lg font-semibold text-white mb-4">{t('sales.paymentMethod')}</h3>
                 
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between text-zinc-400">
-                    <span>Subtotal</span>
+                    <span>{t('sales.subtotal')}</span>
                     <span>{formatCurrency(cartTotal)}</span>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-zinc-400 mb-2">Amount Paid</label>
+                    <label className="block text-sm font-medium text-zinc-400 mb-2">{t('sales.paymentMethod')}</label>
                     <div className="relative">
                       <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
                       <input
@@ -553,7 +555,7 @@ function SalesContent() {
                     </div>
                   </div>
                   <div className="flex justify-between text-lg font-semibold pt-3 border-t border-zinc-700">
-                    <span>Balance Due</span>
+                    <span>{t('sales.grandTotal')}</span>
                     <span className={balance > 0 ? "text-amber-400" : "text-emerald-400"}>
                       {formatCurrency(balance)}
                     </span>
@@ -569,7 +571,7 @@ function SalesContent() {
                       onChange={(e) => setForm({ ...form, sendEmail: e.target.checked })}
                       className="w-4 h-4 rounded border-zinc-600 text-indigo-600"
                     />
-                    <span className="text-sm text-zinc-300">Send receipt via email</span>
+                    <span className="text-sm text-zinc-300">{t('sales.sendEmail')}</span>
                   </label>
                   {form.sendEmail && (
                     <input
@@ -598,12 +600,12 @@ function SalesContent() {
                     {loading ? (
                       <>
                         <Loader2 size={20} className="animate-spin" />
-                        Processing...
+                        {t('sales.processing')}
                       </>
                     ) : (
                       <>
                         <Receipt size={20} />
-                        Complete {saleType === 'retail' ? 'Retail' : 'Wholesale'} Sale - {formatCurrency(cartTotal)}
+                        {t('sales.completeSale')} - {formatCurrency(cartTotal)}
                       </>
                     )}
                   </button>
@@ -618,15 +620,15 @@ function SalesContent() {
           {/* Header Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
-              <p className="text-sm text-zinc-500">Total Sales</p>
+              <p className="text-sm text-zinc-500">{t('sales.totalSales')}</p>
               <p className="text-2xl font-bold text-white">{sales.length}</p>
             </div>
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
-              <p className="text-sm text-zinc-500">Total Revenue</p>
+              <p className="text-sm text-zinc-500">{t('dashboard.totalRevenue')}</p>
               <p className="text-2xl font-bold text-emerald-400">{formatCurrency(totals.total)}</p>
             </div>
             <div className="bg-zinc-900/80 border border-zinc-800 rounded-xl p-4">
-              <p className="text-sm text-zinc-500">Total Collected</p>
+              <p className="text-sm text-zinc-500">{t('sales.totalCollected')}</p>
               <p className="text-2xl font-bold text-indigo-400">{formatCurrency(totals.paid)}</p>
             </div>
           </div>
@@ -638,12 +640,12 @@ function SalesContent() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-zinc-800 bg-zinc-800/30">
-                    <th className="text-left p-4 text-sm font-medium text-zinc-400">Customer</th>
-                    <th className="text-left p-4 text-sm font-medium text-zinc-400">Total</th>
-                    <th className="text-left p-4 text-sm font-medium text-zinc-400">Paid</th>
-                    <th className="text-left p-4 text-sm font-medium text-zinc-400">Debt</th>
-                    <th className="text-left p-4 text-sm font-medium text-zinc-400">Date</th>
-                    <th className="text-left p-4 text-sm font-medium text-zinc-400">Actions</th>
+                    <th className="text-left p-4 text-sm font-medium text-zinc-400">{t('common.customer')}</th>
+                    <th className="text-left p-4 text-sm font-medium text-zinc-400">{t('common.total')}</th>
+                    <th className="text-left p-4 text-sm font-medium text-zinc-400">{t('common.paid')}</th>
+                    <th className="text-left p-4 text-sm font-medium text-zinc-400">{t('debt.title')}</th>
+                    <th className="text-left p-4 text-sm font-medium text-zinc-400">{t('common.date')}</th>
+                    <th className="text-left p-4 text-sm font-medium text-zinc-400">{t('common.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -659,8 +661,8 @@ function SalesContent() {
                       return (
                         <tr key={idx} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                           <td className="p-4">
-                            <p className="text-white font-medium">{sale.customer || "Walk-in Customer"}</p>
-                            <p className="text-xs text-zinc-500">Receipt #{sale.receipt_number || sale.id}</p>
+                            <p className="text-white font-medium">{sale.customer || t('sales.walkInCustomer')}</p>
+                            <p className="text-xs text-zinc-500">{t('sales.receipt')} #{sale.receipt_number || sale.id}</p>
                           </td>
                           <td className="p-4">
                             <p className="text-white font-semibold">{formatCurrency(sale.total)}</p>
@@ -672,7 +674,7 @@ function SalesContent() {
                             <span className={`px-2 py-1 rounded-lg text-xs font-medium ${
                               debt > 0 ? "bg-amber-500/20 text-amber-400" : "bg-emerald-500/20 text-emerald-400"
                             }`}>
-                              {debt > 0 ? formatCurrency(debt) : "Paid"}
+                              {debt > 0 ? formatCurrency(debt) : t('common.paid')}
                             </span>
                           </td>
                           <td className="p-4">
@@ -689,7 +691,7 @@ function SalesContent() {
                               ) : (
                                 <Download size={16} />
                               )}
-                              Receipt
+                              {t('sales.receipt')}
                             </button>
                           </td>
                         </tr>
@@ -699,7 +701,7 @@ function SalesContent() {
                     <tr>
                       <td colSpan={6} className="p-8 text-center text-zinc-500">
                         <Receipt size={32} className="mx-auto mb-2 opacity-50" />
-                        <p>No sales found</p>
+                        <p>{t('sales.noSalesFound')}</p>
                       </td>
                     </tr>
                   )}

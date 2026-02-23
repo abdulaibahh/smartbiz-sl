@@ -2,12 +2,14 @@
 
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useLanguage } from "@/providers/LanguageContext";
 import { debtAPI, salesAPI, customerAPI } from "@/services/api";
 import { ShoppingCart, Search, CheckCircle, Clock, AlertTriangle, Plus, X, User, DollarSign, Calendar, FileText, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 import toast from "react-hot-toast";
 
 function DebtContent() {
+  const { t } = useLanguage();
   const [debts, setDebts] = useState([]);
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -210,7 +212,7 @@ function DebtContent() {
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-500 transition-colors"
         >
           <Plus size={20} />
-          Record New Debt
+          {t('debt.addDebt')}
         </button>
       </div>
 
@@ -222,7 +224,7 @@ function DebtContent() {
               <ShoppingCart className="text-amber-400" size={24} />
             </div>
             <div>
-              <p className="text-sm text-zinc-500">Total Debts</p>
+              <p className="text-sm text-zinc-500">{t('debt.title')}</p>
               <p className="text-2xl font-bold text-white">{debts.length}</p>
             </div>
           </div>
@@ -233,7 +235,7 @@ function DebtContent() {
               <AlertTriangle className="text-red-400" size={24} />
             </div>
             <div>
-              <p className="text-sm text-zinc-500">Outstanding Amount</p>
+              <p className="text-sm text-zinc-500">{t('debt.totalOutstanding')}</p>
               <p className="text-2xl font-bold text-red-400">{formatCurrency(totals)}</p>
             </div>
           </div>
@@ -244,7 +246,7 @@ function DebtContent() {
               <CheckCircle className="text-emerald-400" size={24} />
             </div>
             <div>
-              <p className="text-sm text-zinc-500">Avg. per Debt</p>
+              <p className="text-sm text-zinc-500">{t('debt.avgPerDebt')}</p>
               <p className="text-2xl font-bold text-emerald-400">
                 {debts.length > 0 ? formatCurrency(totals / debts.length) : formatCurrency(0)}
               </p>
@@ -258,7 +260,7 @@ function DebtContent() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={18} />
         <input
           type="text"
-          placeholder="Search by customer name..."
+          placeholder={t('debt.searchDebts')}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full pl-10 pr-4 py-3 rounded-xl bg-zinc-900/80 border border-zinc-800 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"

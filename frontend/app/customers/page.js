@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import { useLanguage } from "@/providers/LanguageContext";
 import { customerAPI } from "@/services/api";
 import { notifySuccess, notifyError } from "@/app/components/useToast";
 
@@ -10,6 +11,7 @@ import { formatCurrency } from "@/lib/currency";
 import { formatDate } from "@/lib/formatDate";
 
 function CustomersContent() {
+  const { t } = useLanguage();
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -119,8 +121,8 @@ function CustomersContent() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-white">Customers</h1>
-          <p className="text-zinc-400 mt-1">Manage your customer database</p>
+          <h1 className="text-2xl font-bold text-white">{t('customers.title')}</h1>
+          <p className="text-zinc-400 mt-1">{t('customers.manageDatabase')}</p>
         </div>
         <button
           onClick={() => {
@@ -131,7 +133,7 @@ function CustomersContent() {
           className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors"
         >
           <Plus size={20} />
-          Add Customer
+          {t('customers.addCustomer')}
         </button>
       </div>
 
@@ -140,7 +142,7 @@ function CustomersContent() {
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={20} />
         <input
           type="text"
-          placeholder="Search customers by name, phone, or email..."
+          placeholder={t('customers.searchCustomers')}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           className="w-full pl-10 pr-4 py-3 bg-zinc-900 border border-zinc-800 rounded-xl text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
@@ -155,9 +157,9 @@ function CustomersContent() {
       ) : filteredCustomers.length === 0 ? (
         <div className="text-center py-12 bg-zinc-900/50 rounded-2xl border border-zinc-800">
           <Users className="mx-auto h-12 w-12 text-zinc-600 mb-4" />
-          <h3 className="text-lg font-medium text-white mb-2">No customers found</h3>
+          <h3 className="text-lg font-medium text-white mb-2">{t('customers.noCustomers')}</h3>
           <p className="text-zinc-500">
-            {searchTerm ? "Try adjusting your search terms" : "Get started by adding your first customer"}
+            {searchTerm ? t('customers.tryAdjusting') : t('customers.getStarted')}
           </p>
         </div>
       ) : (
@@ -178,7 +180,7 @@ function CustomersContent() {
                     <h3 className="font-medium text-white">{customer.name}</h3>
                     {customer.total_spent !== undefined && (
                       <p className="text-sm text-zinc-400">
-                        Total: {formatCurrency(customer.total_spent || 0)}
+                        {t('customers.totalSpent')} {formatCurrency(customer.total_spent || 0)}
                       </p>
                     )}
                   </div>
@@ -219,7 +221,7 @@ function CustomersContent() {
                 className="mt-4 w-full flex items-center justify-center gap-2 px-3 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors text-sm"
               >
                 <History size={16} />
-                View Purchase History
+                {t('customers.viewPurchaseHistory')}
               </button>
             </div>
           ))}
@@ -232,7 +234,7 @@ function CustomersContent() {
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 w-full max-w-md">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-white">
-                {editingCustomer ? "Edit Customer" : "Add Customer"}
+                {editingCustomer ? t('customers.editCustomer') : t('customers.addCustomer')}
               </h2>
               <button
                 onClick={() => {
@@ -248,7 +250,7 @@ function CustomersContent() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-1">
-                  Name *
+                  {t('common.name')} *
                 </label>
                 <input
                   type="text"
@@ -256,33 +258,33 @@ function CustomersContent() {
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  placeholder="Customer name"
+                  placeholder={t('common.name')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-1">
-                  Phone
+                  {t('common.phone')}
                 </label>
                 <input
                   type="tel"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  placeholder="Phone number"
+                  placeholder={t('common.phone')}
                 />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-1">
-                  Email
+                  {t('common.email')}
                 </label>
                 <input
                   type="email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   className="w-full px-3 py-2 bg-zinc-800 border border-zinc-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
-                  placeholder="Email address"
+                  placeholder={t('common.email')}
                 />
               </div>
 
@@ -295,13 +297,13 @@ function CustomersContent() {
                   }}
                   className="flex-1 px-4 py-2 bg-zinc-800 text-zinc-300 rounded-lg hover:bg-zinc-700 transition-colors"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-500 transition-colors"
                 >
-                  {editingCustomer ? "Update" : "Add"} Customer
+                  {editingCustomer ? t('common.update') : t('common.add')}
                 </button>
               </div>
             </form>
@@ -316,7 +318,7 @@ function CustomersContent() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h2 className="text-xl font-semibold text-white">
-                  Purchase History
+                  {t('customers.purchaseHistory')}
                 </h2>
                 <p className="text-zinc-400 text-sm">{selectedCustomer.name}</p>
               </div>
@@ -335,7 +337,7 @@ function CustomersContent() {
             {customerHistory.length === 0 ? (
               <div className="text-center py-8">
                 <History className="mx-auto h-12 w-12 text-zinc-600 mb-4" />
-                <p className="text-zinc-500">No purchase history found</p>
+                <p className="text-zinc-500">{t('customers.noHistory')}</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -363,7 +365,7 @@ function CustomersContent() {
                           ? "bg-green-500/20 text-green-400"
                           : "bg-amber-500/20 text-amber-400"
                       }`}>
-                        {sale.paid >= sale.total ? "Paid" : "Partial"}
+                        {sale.paid >= sale.total ? t('common.paid') : t('customers.partial')}
                       </span>
                     </div>
                   </div>
