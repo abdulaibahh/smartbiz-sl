@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import { useAuth } from "@/providers/AuthContext";
+import { useLanguage } from "@/providers/LanguageContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function Register() {
   const { register } = useAuth();
+  const { t } = useLanguage();
   const router = useRouter();
   const [form, setForm] = useState({ 
     name: "", 
@@ -48,13 +51,18 @@ export default function Register() {
       </div>
 
       <div className="relative w-full max-w-md">
+        {/* Language Switcher */}
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 mb-4">
             <span className="text-white font-bold text-2xl">SB</span>
           </div>
           <h1 className="text-3xl font-bold text-white">SmartBiz</h1>
-          <p className="text-zinc-500 mt-2">Create your business account</p>
+          <p className="text-zinc-500 mt-2">{t('auth.createBusinessAccount')}</p>
         </div>
 
         {/* Register Form */}
@@ -74,7 +82,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Your Name
+                {t('auth.yourName')}
               </label>
               <input
                 type="text"
@@ -88,7 +96,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Business Name
+                {t('auth.businessName')}
               </label>
               <input
                 type="text"
@@ -102,7 +110,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Email Address
+                {t('auth.email')}
               </label>
               <input
                 type="email"
@@ -116,7 +124,7 @@ export default function Register() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Password
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <input
@@ -146,19 +154,19 @@ export default function Register() {
               {loading ? (
                 <>
                   <Loader2 size={20} className="animate-spin" />
-                  Creating account...
+                  {t('auth.creatingAccount')}
                 </>
               ) : (
-                "Create Account"
+                t('auth.createAccount')
               )}
             </button>
           </form>
 
           <div className="mt-6 text-center">
             <p className="text-zinc-500">
-              Already have an account?{" "}
+              {t('auth.alreadyHaveAccount')}{" "}
               <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
-                Sign in
+                {t('auth.signIn')}
               </Link>
             </p>
           </div>
@@ -167,7 +175,7 @@ export default function Register() {
         {/* Trial Info */}
         <div className="mt-6 p-4 rounded-xl bg-zinc-900/50 border border-zinc-800">
           <p className="text-xs text-zinc-500 text-center">
-            Start with a 30-day free trial. No credit card required.
+            {t('auth.trialInfo')}
           </p>
         </div>
       </div>

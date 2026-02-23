@@ -1,22 +1,11 @@
-# Delete Account Fix - TODO
+# Multi-Language Support Implementation
 
-## Task
-Fix the "delete account fails sometimes" issue
+## Tasks
+- [ ] 1. Create translation files (en.js, fr.js, ar.js) in frontend/lib/i18n/
+- [ ] 2. Create LanguageContext in frontend/providers/
+- [ ] 3. Create LanguageSwitcher component
+- [ ] 4. Update frontend/app/layout.js with LanguageProvider and RTL support
+- [ ] 5. Update Sidebar.js with translations
+- [ ] 6. Update Header.js with translations and LanguageSwitcher
 
-## Root Cause
-The delete account endpoint references a non-existent `order_payments` table and is missing deletion of several other related tables.
-
-## Plan
-- [ ] Fix `backend/src/routes/auth.routes.js` - Update delete account endpoint
-- [ ] Fix `backend/src/routes/business.routes.js` - Update delete account endpoint
-
-## Changes Needed
-1. Remove reference to non-existent `order_payments` table
-2. Add proper deletion of `sales_items` before `sales`
-3. Add deletion of `subscriptions` table
-4. Add deletion of `password_reset_tokens` table
-5. Add deletion of `stripe_events` table  
-6. Add deletion of `supplier_payments` table
-7. Fix the deletion order to respect foreign key constraints
-
-## Status: IN PROGRESS
+## Status: In Progress
