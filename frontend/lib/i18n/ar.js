@@ -290,6 +290,15 @@ export const ar = {
     creatingAccount: "جاري إنشاء الحساب...",
     signIn: "تسجيل الدخول",
     trialInfo: "ابدأ تجربة مجانية لمدة 30 يوماً. لا يلزم بطاقة ائتمان.",
+    checkEmail: "تحقق من بريدك الإلكتروني",
+    resetInstructions: "إذا كان هناك حساب مرتبط بهذا البريد، أرسلنا تعليمات إعادة التعيين.",
+    returnToLogin: "العودة لتسجيل الدخول",
+    sendResetLink: "إرسال رابط إعادة التعيين",
+    rememberPassword: "تذكر كلمة المرور؟",
+    createNewPassword: "إنشاء كلمة مرور جديدة",
+    passwordResetSuccess: "تم إعادة تعيين كلمة المرور!",
+    passwordResetSuccessMsg: "تم تحديث كلمة المرور. يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
+    goToLogin: "الذهاب لتسجيل الدخول",
   },
   
   // Roles

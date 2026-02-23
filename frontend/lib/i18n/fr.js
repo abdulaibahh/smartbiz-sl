@@ -290,6 +290,15 @@ export const fr = {
     creatingAccount: "Création du compte...",
     signIn: "Se connecter",
     trialInfo: "Essayez gratuitement pendant 30 jours. Pas de carte de crédit requise.",
+    checkEmail: "Vérifiez votre e-mail",
+    resetInstructions: "Si un compte existe avec cet e-mail, nous avons envoyé les instructions de réinitialisation.",
+    returnToLogin: "Retour à la connexion",
+    sendResetLink: "Envoyer le lien",
+    rememberPassword: "Vous souvenez-vous ?",
+    createNewPassword: "Créer un nouveau mot de passe",
+    passwordResetSuccess: "Mot de passe réinitialisé !",
+    passwordResetSuccessMsg: "Votre mot de passe a été mis à jour. Vous pouvez maintenant vous connecter.",
+    goToLogin: "Aller à la connexion",
   },
   
   // Roles

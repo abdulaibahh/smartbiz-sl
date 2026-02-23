@@ -3,12 +3,15 @@
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/providers/LanguageContext";
 import { authAPI } from "@/services/api";
 import { Loader2, Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const token = searchParams.get("token");
 
   const [form, setForm] = useState({ password: "", confirmPassword: "" });
@@ -60,14 +63,19 @@ function ResetPasswordForm() {
         <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-purple-500/20 to-transparent rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative w-full max-w-md">
+<div className="relative w-full max-w-md">
+        {/* Language Switcher */}
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+
         {/* Back Button */}
         <button
           onClick={() => router.push("/login")}
           className="absolute -top-12 left-0 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={20} />
-          Back to login
+          {t('common.back')} {t('auth.login')}
         </button>
 
         {/* Logo */}
@@ -76,25 +84,25 @@ function ResetPasswordForm() {
             <span className="text-white font-bold text-2xl">SB</span>
           </div>
           <h1 className="text-3xl font-bold text-white">SmartBiz</h1>
-          <p className="text-zinc-500 mt-2">Create new password</p>
+          <p className="text-zinc-500 mt-2">{t('auth.createNewPassword') || 'Create new password'}</p>
         </div>
 
         {/* Form */}
         <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8">
           {success ? (
-            <div className="text-center space-y-4">
+<div className="text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
                 <CheckCircle className="text-emerald-400" size={32} />
               </div>
-              <h2 className="text-xl font-semibold text-white">Password reset successful!</h2>
+              <h2 className="text-xl font-semibold text-white">{t('auth.passwordResetSuccess') || 'Password reset successful!'}</h2>
               <p className="text-zinc-400">
-                Your password has been updated. You can now sign in with your new password.
+                {t('auth.passwordResetSuccessMsg') || 'Your password has been updated. You can now sign in with your new password.'}
               </p>
               <button
                 onClick={() => router.push("/login")}
                 className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-all"
               >
-                Go to login
+                {t('auth.goToLogin') || 'Go to login'}
               </button>
             </div>
           ) : (
@@ -147,7 +155,7 @@ function ResetPasswordForm() {
                 />
               </div>
 
-              <button
+<button
                 type="submit"
                 disabled={loading || !token}
                 className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -155,18 +163,18 @@ function ResetPasswordForm() {
                 {loading ? (
                   <>
                     <Loader2 size={20} className="animate-spin" />
-                    Resetting...
+                    {t('common.loading')}
                   </>
                 ) : (
-                  "Reset Password"
+                  t('auth.resetPassword')
                 )}
               </button>
 
               <div className="text-center">
                 <p className="text-zinc-500 text-sm">
-                  Remember your password?{" "}
+                  {t('auth.rememberPassword') || 'Remember your password?'}{" "}
                   <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
-                    Sign in
+                    {t('auth.signIn')}
                   </Link>
                 </p>
               </div>

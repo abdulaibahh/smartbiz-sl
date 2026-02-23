@@ -1,11 +1,30 @@
-# Multi-Language Support Implementation
+# SmartBiz Multi-Language Implementation Plan
 
-## Tasks
-- [ ] 1. Create translation files (en.js, fr.js, ar.js) in frontend/lib/i18n/
-- [ ] 2. Create LanguageContext in frontend/providers/
-- [ ] 3. Create LanguageSwitcher component
-- [ ] 4. Update frontend/app/layout.js with LanguageProvider and RTL support
-- [ ] 5. Update Sidebar.js with translations
-- [ ] 6. Update Header.js with translations and LanguageSwitcher
+## Task
+Add multiple language selection to display this system (english, french, arabic). Provide a drop down option on the main page to select system language just like in register/login page.
 
-## Status: In Progress
+## Progress Tracking
+
+### Completed
+- [x] Analyze existing i18n system (frontend/lib/i18n)
+- [x] Review LanguageContext and LanguageSwitcher components
+- [x] Understand current implementation in login/register pages
+- [x] Plan confirmed by user
+
+### In Progress
+- [ ] Update Sidebar.js - Add LanguageSwitcher and translate navigation labels
+- [ ] Update Header.js - Translate page titles
+
+### Pending
+- [ ] Test the implementation
+
+## Changes Made
+
+### 1. frontend/components/layout/Sidebar.js
+- Added useLanguage hook import
+- Replaced hardcoded navigation labels with t() translations
+- Added LanguageSwitcher component for language selection
+
+### 2. frontend/components/layout/Header.js
+- Added useLanguage hook import  
+- Updated pageTitles to use t() translations

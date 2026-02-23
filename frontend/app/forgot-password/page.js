@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useLanguage } from "@/providers/LanguageContext";
 import { authAPI } from "@/services/api";
 import { Loader2, Mail, ArrowLeft, CheckCircle } from "lucide-react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function ForgotPassword() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -40,14 +43,19 @@ export default function ForgotPassword() {
         <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-purple-500/20 to-transparent rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative w-full max-w-md">
+<div className="relative w-full max-w-md">
+        {/* Language Switcher */}
+        <div className="absolute top-4 right-4">
+          <LanguageSwitcher />
+        </div>
+
         {/* Back Button */}
         <button
           onClick={() => router.push("/login")}
           className="absolute -top-12 left-0 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors"
         >
           <ArrowLeft size={20} />
-          Back to login
+          {t('common.back')} {t('auth.login')}
         </button>
 
         {/* Logo */}
@@ -56,19 +64,19 @@ export default function ForgotPassword() {
             <span className="text-white font-bold text-2xl">SB</span>
           </div>
           <h1 className="text-3xl font-bold text-white">SmartBiz</h1>
-          <p className="text-zinc-500 mt-2">Reset your password</p>
+          <p className="text-zinc-500 mt-2">{t('auth.resetPassword')}</p>
         </div>
 
         {/* Form */}
         <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8">
           {success ? (
-            <div className="text-center space-y-4">
+<div className="text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto">
                 <CheckCircle className="text-emerald-400" size={32} />
               </div>
-              <h2 className="text-xl font-semibold text-white">Check your email</h2>
+              <h2 className="text-xl font-semibold text-white">{t('auth.checkEmail') || 'Check your email'}</h2>
               <p className="text-zinc-400">
-                If an account exists with this email, we've sent password reset instructions.
+                {t('auth.resetInstructions') || 'If an account exists with this email, we have sent password reset instructions.'}
               </p>
               {demoLink && (
                 <div className="p-4 rounded-lg bg-zinc-800/50 border border-zinc-700">
@@ -85,7 +93,7 @@ export default function ForgotPassword() {
                 onClick={() => router.push("/login")}
                 className="w-full py-3 px-4 rounded-xl bg-zinc-800 text-white font-medium hover:bg-zinc-700 transition-all"
               >
-                Return to login
+                {t('auth.returnToLogin') || 'Return to login'}
               </button>
             </div>
           ) : (
@@ -111,7 +119,7 @@ export default function ForgotPassword() {
                 />
               </div>
 
-              <button
+<button
                 type="submit"
                 disabled={loading}
                 className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium hover:from-indigo-500 hover:to-purple-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -119,18 +127,18 @@ export default function ForgotPassword() {
                 {loading ? (
                   <>
                     <Loader2 size={20} className="animate-spin" />
-                    Sending...
+                    {t('common.loading')}
                   </>
                 ) : (
-                  "Send Reset Link"
+                  t('auth.sendResetLink') || 'Send Reset Link'
                 )}
               </button>
 
               <div className="text-center">
                 <p className="text-zinc-500 text-sm">
-                  Remember your password?{" "}
+                  {t('auth.rememberPassword') || 'Remember your password?'}{" "}
                   <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
-                    Sign in
+                    {t('auth.signIn')}
                   </Link>
                 </p>
               </div>

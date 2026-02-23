@@ -290,6 +290,15 @@ export const en = {
     creatingAccount: "Creating account...",
     signIn: "Sign in",
     trialInfo: "Start with a 30-day free trial. No credit card required.",
+    checkEmail: "Check your email",
+    resetInstructions: "If an account exists with this email, we've sent password reset instructions.",
+    returnToLogin: "Return to login",
+    sendResetLink: "Send Reset Link",
+    rememberPassword: "Remember your password?",
+    createNewPassword: "Create new password",
+    passwordResetSuccess: "Password reset successful!",
+    passwordResetSuccessMsg: "Your password has been updated. You can now sign in with your new password.",
+    goToLogin: "Go to login",
   },
   
   // Roles

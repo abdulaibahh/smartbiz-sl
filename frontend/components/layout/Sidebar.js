@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/providers/AuthContext";
+import { useLanguage } from "@/providers/LanguageContext";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { 
   LayoutDashboard, 
   Receipt, 
@@ -21,6 +23,7 @@ import {
 export default function Sidebar() {
   const path = usePathname();
   const { user, logout } = useAuth();
+  const { t } = useLanguage();
 
   const isActive = (href) => path === href;
 
@@ -57,39 +60,44 @@ export default function Sidebar() {
         </Link>
       </div>
 
+      {/* Language Switcher */}
+      <div className="px-4 mb-4">
+        <LanguageSwitcher />
+      </div>
+
       {/* Navigation */}
       <nav className="flex-1 space-y-2">
         <div className="px-4 mb-2">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Main</span>
+          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('nav.main')}</span>
         </div>
         
-        <NavItem href="/" icon={LayoutDashboard} label="Dashboard" />
-        <NavItem href="/sales" icon={Receipt} label="Quick Sale" />
+        <NavItem href="/" icon={LayoutDashboard} label={t('sidebar.dashboard')} />
+        <NavItem href="/sales" icon={Receipt} label={t('sidebar.quickSale')} />
         
         <div className="px-4 mt-6 mb-2">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Management</span>
+          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('nav.management')}</span>
         </div>
         
-        <NavItem href="/inventory" icon={Package} label="Inventory" />
-        <NavItem href="/orders" icon={Truck} label="Supplier Orders" />
-        <NavItem href="/customers" icon={Users} label="Customers" />
-        <NavItem href="/debt" icon={CreditCard} label="Debt Tracking" />
+        <NavItem href="/inventory" icon={Package} label={t('sidebar.inventory')} />
+        <NavItem href="/orders" icon={Truck} label={t('sidebar.supplierOrders')} />
+        <NavItem href="/customers" icon={Users} label={t('sidebar.customers')} />
+        <NavItem href="/debt" icon={CreditCard} label={t('sidebar.debtTracking')} />
         
         <div className="px-4 mt-6 mb-2">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">AI Features</span>
+          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('nav.aiFeatures')}</span>
         </div>
         
-        <NavItem href="/ai" icon={Brain} label="AI Assistant" />
+        <NavItem href="/ai" icon={Brain} label={t('sidebar.aiAssistant')} />
         
         <div className="px-4 mt-6 mb-2">
-          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">Account</span>
+          <span className="text-xs font-medium text-zinc-500 uppercase tracking-wider">{t('nav.account')}</span>
         </div>
         
-        <NavItem href="/subscription" icon={CreditCard} label="Subscription" />
-        <NavItem href="/admin/settings" icon={Settings} label="Business Settings" />
+        <NavItem href="/subscription" icon={CreditCard} label={t('sidebar.subscription')} />
+        <NavItem href="/admin/settings" icon={Settings} label={t('sidebar.businessSettings')} />
         
         {user?.role === "owner" && (
-          <NavItem href="/admin/users" icon={UserPlus} label="Manage Users" />
+          <NavItem href="/admin/users" icon={UserPlus} label={t('sidebar.manageUsers')} />
         )}
       </nav>
 
@@ -106,7 +114,7 @@ export default function Sidebar() {
           <button 
             onClick={logout}
             className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition-colors"
-            title="Logout"
+            title={t('auth.logout')}
           >
             <LogOut size={18} />
           </button>

@@ -7,27 +7,31 @@ import { useLanguage } from "@/providers/LanguageContext";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { Bell, Search, User } from "lucide-react";
 
-const pageTitles = {
-  "/": "Dashboard",
-  "/sales": "Sales",
-  "/sales/history": "Sales History",
-  "/inventory": "Inventory",
-  "/inventory/add": "Add Stock",
-  "/debt": "Debts",
-  "/ai": "AI Assistant",
-  "/customers": "Customers",
-  "/settings": "Settings",
-  "/subscription": "Subscription",
-  "/admin": "Admin Panel",
-};
-
 export default function Header() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const title = pageTitles[pathname] || "SmartBiz";
+  // Get translated page title based on pathname
+  const getPageTitle = () => {
+    const pathMap = {
+      "/": t('pages.dashboard'),
+      "/sales": t('pages.sales'),
+      "/sales/history": t('pages.salesHistory'),
+      "/inventory": t('pages.inventory'),
+      "/inventory/add": t('pages.addStock'),
+      "/debt": t('pages.debt'),
+      "/ai": t('pages.ai'),
+      "/customers": t('pages.customers'),
+      "/settings": t('pages.settings'),
+      "/subscription": t('pages.subscription'),
+      "/admin": t('pages.admin'),
+    };
+    return pathMap[pathname] || "SmartBiz";
+  };
+
+  const title = getPageTitle();
 
   return (
     <header className="h-16 bg-zinc-900/50 backdrop-blur-lg border-b border-zinc-800 px-6 flex items-center justify-between sticky top-0 z-30">
