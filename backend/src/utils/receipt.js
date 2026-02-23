@@ -1,4 +1,5 @@
 const PDFDocument = require("pdfkit");
+const path = require("path");
 const db = require("../config/db");
 
 // Generate professional receipt PDF
@@ -63,7 +64,12 @@ async function generateReceiptPDF(saleId, businessId) {
       
       if (business.logo_url) {
         try {
-          doc.image(business.logo_url, logoX, logoY, { width: logoSize, height: logoSize });
+          // Convert relative path to absolute path for PDFKit
+          let logoPath = business.logo_url;
+          if (logoPath.startsWith('/uploads/')) {
+            logoPath = path.join(__dirname, '../../', logoPath);
+          }
+          doc.image(logoPath, logoX, logoY, { width: logoSize, height: logoSize });
         } catch (e) {
           // Fallback to circle with initial
           doc.circle(logoX + logoSize/2, logoY + logoSize/2, logoSize/2).fill(primaryColor);
