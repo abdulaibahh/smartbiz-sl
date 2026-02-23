@@ -2,6 +2,7 @@ const router = require("express").Router();
 const db = require("../config/db");
 const auth = require("../middlewares/auth");
 const sub = require("../middlewares/subscription");
+const roleAuth = require("../middlewares/role");
 
 // Quick fix endpoint to add missing columns
 router.get("/fix-columns", async (req, res) => {
@@ -168,6 +169,8 @@ router.post("/wholesale", auth, sub, async (req, res) => {
 });
 
 // Supplier order - add stock (legacy support with stock_type)
+// Adding new stock - all authenticated users with subscription can do
+// Editing existing items with cost_price - owner only
 router.post("/supplier-order", auth, sub, async (req, res) => {
   console.log("[INVENTORY] POST /supplier-order - Request received");
   console.log("[INVENTORY] Body:", req.body);
@@ -175,8 +178,13 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
   
   const { id, product, quantity, cost_price, selling_price, stock_type, retail_quantity, wholesale_quantity, retail_price, wholesale_price } = req.body;
 
-  // If ID is provided, this is an update operation (from edit modal)
+  // If ID is provided, this is an update operation (from edit modal) - Owner only
   if (id) {
+    // Only owners can edit existing items
+    if (req.user.role !== 'owner') {
+      return res.status(403).json({ message: "Only owners can edit inventory items" });
+    }
+    
     console.log("[INVENTORY] Update operation with ID:", id);
     try {
       const updates = [];
@@ -322,8 +330,8 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
   }
 });
 
-// Update inventory quantity and prices
-router.put("/:id", auth, async (req, res) => {
+// Update inventory quantity and prices (Owner only - can edit cost prices)
+router.put("/:id", auth, roleAuth("owner"), async (req, res) => {
   const { id } = req.params;
   const { quantity, cost_price, selling_price, retail_quantity, wholesale_quantity, retail_price, wholesale_price } = req.body;
 
@@ -397,8 +405,8 @@ router.put("/:id", auth, async (req, res) => {
   }
 });
 
-// Delete inventory item
-router.delete("/:id", auth, async (req, res) => {
+// Delete inventory item (Owner only)
+router.delete("/:id", auth, roleAuth("owner"), async (req, res) => {
   const { id } = req.params;
 
   console.log("[DELETE] Attempting to delete inventory item:", id);

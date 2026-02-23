@@ -5,10 +5,11 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/providers/AuthContext";
 import { authAPI } from "@/services/api";
 import toast from "react-hot-toast";
-import { UserPlus, Users, Trash2, Loader2, Shield, UserCog } from "lucide-react";
+import { UserPlus, Users, Trash2, Loader2, Shield, UserCog, Lock } from "lucide-react";
 
 function UsersContent() {
   const { user } = useAuth();
+  const isOwner = user?.role === 'owner';
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -77,6 +78,30 @@ function UsersContent() {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 size={40} className="animate-spin text-indigo-500" />
+      </div>
+    );
+  }
+
+  // Show access denied for non-owners
+  if (!isOwner) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-red-500/20 flex items-center justify-center">
+            <Lock className="text-red-400" size={24} />
+          </div>
+          <div>
+            <h1 className="text-xl font-semibold text-white">Access Restricted</h1>
+            <p className="text-sm text-zinc-500">Only business owners can manage team members</p>
+          </div>
+        </div>
+
+        <div className="bg-zinc-900/80 border border-zinc-800 rounded-2xl p-12 text-center">
+          <Lock size={48} className="mx-auto text-zinc-600 mb-4" />
+          <h2 className="text-lg font-semibold text-white mb-2">Access Denied</h2>
+          <p className="text-zinc-400">You don't have permission to view or manage users.</p>
+          <p className="text-zinc-500 text-sm mt-2">Only the business owner can add or remove team members.</p>
+        </div>
       </div>
     );
   }

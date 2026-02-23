@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useLanguage } from "@/providers/LanguageContext";
+import { useAuth } from "@/providers/AuthContext";
 import { inventoryAPI } from "@/services/api";
 import { Package, Search, Plus, Minus, Trash2, DollarSign, Edit2, X, Store, Building2 } from "lucide-react";
 import toast from "react-hot-toast";
@@ -10,6 +11,8 @@ import { formatCurrency } from "@/lib/currency";
 
 function InventoryContent() {
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const isOwner = user?.role === 'owner';
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -259,6 +262,7 @@ function InventoryContent() {
                 }`}>
                   <Package className={stockType === 'retail' ? 'text-emerald-400' : 'text-blue-400'} size={24} />
                 </div>
+                {isOwner && (
                 <div className="flex gap-1">
                   <button
                     onClick={() => openEditModal(item)}
@@ -273,6 +277,7 @@ function InventoryContent() {
                     <Trash2 size={18} />
                   </button>
                 </div>
+                )}
               </div>
               
               <h3 className="text-lg font-semibold text-white mb-1">{item.product}</h3>
@@ -288,12 +293,14 @@ function InventoryContent() {
                 </div>
               </div>
               
-              {/* Price Display */}
-              {(item.retail_price > 0 || item.wholesale_price > 0 || item.cost_price > 0) && (
+              {/* Price Display - Only show to owners */}
+              {isOwner && (item.cost_price > 0) && (
                 <div className="text-sm text-zinc-400 mb-3 space-y-1">
-                  {item.cost_price > 0 && (
-                    <p>{t('inventory.costPrice')}: {formatCurrency(item.cost_price)}</p>
-                  )}
+                  <p>{t('inventory.costPrice')}: {formatCurrency(item.cost_price)}</p>
+                </div>
+              )}
+              {(item.retail_price > 0 || item.wholesale_price > 0) && (
+                <div className="text-sm text-zinc-400 mb-3 space-y-1">
                   {item.retail_price > 0 && (
                     <p className="text-green-400">{t('inventory.retailPrice')}: {formatCurrency(item.retail_price)}</p>
                   )}
@@ -379,6 +386,7 @@ function InventoryContent() {
                   className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                 />
               </div>
+              {isOwner && (
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.costPrice')}</label>
                 <input
@@ -391,6 +399,7 @@ function InventoryContent() {
                   className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                 />
               </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.retailPrice')}</label>
                 <input
@@ -482,6 +491,7 @@ function InventoryContent() {
                   />
                 </div>
               </div>
+              {isOwner && (
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.costPrice')}</label>
                 <input
@@ -494,6 +504,7 @@ function InventoryContent() {
                   className="w-full px-4 py-3 rounded-xl bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                 />
               </div>
+              )}
               <div>
                 <label className="block text-sm font-medium text-zinc-400 mb-2">{t('inventory.retailPrice')}</label>
                 <input
