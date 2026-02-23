@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { salesAPI } from "@/services/api";
-import { Receipt, Search, Download, ChevronLeft, ChevronRight } from "lucide-react";
+import { Receipt, Search, Download, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { formatCurrency } from "@/lib/currency";
 
 function SalesHistoryContent() {
@@ -11,6 +11,7 @@ function SalesHistoryContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+  const [downloadingId, setDownloadingId] = useState(null);
   const itemsPerPage = 10;
 
   useEffect(() => {
@@ -56,6 +57,29 @@ function SalesHistoryContent() {
       month: 'short', day: 'numeric', year: 'numeric', 
       hour: '2-digit', minute: '2-digit' 
     });
+
+  // Download receipt function
+  const handleDownloadReceipt = async (saleId) => {
+    try {
+      setDownloadingId(saleId);
+      const response = await salesAPI.getReceipt(saleId);
+      
+      // Create blob URL and download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `receipt-${saleId}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading receipt:", error);
+      alert("Failed to download receipt. Please try again.");
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   if (loading) {
     return (
@@ -112,6 +136,7 @@ function SalesHistoryContent() {
                 <th className="text-left p-4 text-sm font-medium text-zinc-400">Paid</th>
                 <th className="text-left p-4 text-sm font-medium text-zinc-400">Debt</th>
                 <th className="text-left p-4 text-sm font-medium text-zinc-400">Date</th>
+                <th className="text-left p-4 text-sm font-medium text-zinc-400">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -122,6 +147,9 @@ function SalesHistoryContent() {
                     <tr key={idx} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
                       <td className="p-4">
                         <p className="text-white font-medium">{sale.customer || "Walk-in Customer"}</p>
+                        <p className="text-xs text-zinc-500">
+                          Receipt #{sale.receipt_number || sale.id}
+                        </p>
                       </td>
                       <td className="p-4">
                         <p className="text-white font-semibold">{formatCurrency(sale.total)}</p>
@@ -139,12 +167,26 @@ function SalesHistoryContent() {
                       <td className="p-4">
                         <p className="text-zinc-500 text-sm">{formatDate(sale.created_at)}</p>
                       </td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleDownloadReceipt(sale.id)}
+                          disabled={downloadingId === sale.id}
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm hover:bg-indigo-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {downloadingId === sale.id ? (
+                            <Loader2 size={16} className="animate-spin" />
+                          ) : (
+                            <Download size={16} />
+                          )}
+                          Receipt
+                        </button>
+                      </td>
                     </tr>
                   );
                 })
               ) : (
                 <tr>
-                  <td colSpan={5} className="p-8 text-center text-zinc-500">
+                  <td colSpan={6} className="p-8 text-center text-zinc-500">
                     <Receipt size={32} className="mx-auto mb-2 opacity-50" />
                     <p>No sales found</p>
                   </td>
