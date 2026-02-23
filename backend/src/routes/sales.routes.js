@@ -93,28 +93,45 @@ router.post("/sale", auth, sub, async (req, res) => {
       );
     }
 
-    // Generate PDF receipt
+    // Generate PDF receipt and optionally send email
     let pdfBase64 = null;
+    let emailSent = false;
+    
     try {
       const pdfBuffer = await generateReceiptPDF(saleId, req.user.business_id);
       pdfBase64 = pdfBuffer.toString("base64");
 
-      if (sendEmail && customerEmail) {
-        const businessResult = await db.query(
-          "SELECT name, shop_name FROM businesses WHERE id = $1",
-          [req.user.business_id]
-        );
-        const business = businessResult.rows[0] || {};
+      // Send email if requested and email provided (non-blocking)
+      if (sendEmail && customerEmail && customerEmail.trim()) {
+        try {
+          const businessResult = await db.query(
+            "SELECT name, shop_name FROM businesses WHERE id = $1",
+            [req.user.business_id]
+          );
+          const business = businessResult.rows[0] || {};
 
-        await sendReceiptEmail(customerEmail, pdfBuffer, {
-          receiptNumber: saleId,
-          total: totalAmount.toLocaleString(),
-          paid: paidAmount.toLocaleString(),
-          businessName: business.shop_name || business.name
-        });
+          // Use the actual receipt number, not the database ID
+          const emailResult = await sendReceiptEmail(customerEmail.trim(), pdfBuffer, {
+            receiptNumber: nextReceiptNumber,
+            total: totalAmount.toLocaleString(),
+            paid: paidAmount.toLocaleString(),
+            businessName: business.shop_name || business.name
+          });
+          
+          if (emailResult.success) {
+            emailSent = true;
+            console.log("📧 Email sent successfully to:", customerEmail);
+          } else {
+            console.log("📧 Email not sent:", emailResult.reason);
+          }
+        } catch (emailErr) {
+          // Email failure should not break the sale
+          console.error("📧 Email error:", emailErr.message);
+        }
       }
     } catch (pdfErr) {
       console.error("PDF generation error:", pdfErr.message);
+      // Continue even if PDF generation fails - sale still recorded
     }
 
     res.json({ 
@@ -122,7 +139,8 @@ router.post("/sale", auth, sub, async (req, res) => {
       saleId,
       receiptNumber: nextReceiptNumber,
       saleType,
-      receipt: pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null
+      receipt: pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null,
+      emailSent
     });
   } catch (err) {
     console.error("Sale error:", err);
@@ -170,29 +188,45 @@ router.post("/quick", auth, sub, async (req, res) => {
       );
     }
 
-    // Generate PDF receipt
+    // Generate PDF receipt and optionally send email
     let pdfBase64 = null;
+    let emailSent = false;
+    
     try {
       const pdfBuffer = await generateReceiptPDF(saleId, req.user.business_id);
       pdfBase64 = pdfBuffer.toString("base64");
 
-      // Send email if requested and email provided
-      if (sendEmail && customerEmail) {
-        const businessResult = await db.query(
-          "SELECT name, shop_name FROM businesses WHERE id = $1",
-          [req.user.business_id]
-        );
-        const business = businessResult.rows[0] || {};
+      // Send email if requested and email provided (non-blocking)
+      if (sendEmail && customerEmail && customerEmail.trim()) {
+        try {
+          const businessResult = await db.query(
+            "SELECT name, shop_name FROM businesses WHERE id = $1",
+            [req.user.business_id]
+          );
+          const business = businessResult.rows[0] || {};
 
-        await sendReceiptEmail(customerEmail, pdfBuffer, {
-          receiptNumber: saleId,
-          total: totalAmount.toLocaleString(),
-          paid: paidAmount.toLocaleString(),
-          businessName: business.shop_name || business.name
-        });
+          // Use the actual receipt number, not the database ID
+          const emailResult = await sendReceiptEmail(customerEmail.trim(), pdfBuffer, {
+            receiptNumber: nextReceiptNumber,
+            total: totalAmount.toLocaleString(),
+            paid: paidAmount.toLocaleString(),
+            businessName: business.shop_name || business.name
+          });
+          
+          if (emailResult.success) {
+            emailSent = true;
+            console.log("Email sent successfully to:", customerEmail);
+          } else {
+            console.log("Email not sent:", emailResult.reason);
+          }
+        } catch (emailErr) {
+          // Email failure should not break the sale
+          console.error("Email error:", emailErr.message);
+        }
       }
     } catch (pdfErr) {
       console.error("PDF generation error:", pdfErr.message);
+      // Continue even if PDF generation fails - sale still recorded
     }
 
     res.json({ 
@@ -200,7 +234,8 @@ router.post("/quick", auth, sub, async (req, res) => {
       saleId,
       receiptNumber: nextReceiptNumber,
       saleType,
-      receipt: pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null
+      receipt: pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null,
+      emailSent
     });
   } catch (err) {
     console.error("Quick sale error:", err);
