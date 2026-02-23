@@ -3,9 +3,9 @@ const db = require("../config/db");
 
 // Generate professional receipt PDF
 async function generateReceiptPDF(saleId, businessId) {
-  // Get sale details
+  // Get sale details including receipt_number
   const saleResult = await db.query(
-    "SELECT * FROM sales WHERE id = $1 AND business_id = $2",
+    "SELECT *, COALESCE(receipt_number, id) as display_receipt_number FROM sales WHERE id = $1 AND business_id = $2",
     [saleId, businessId]
   );
 
@@ -116,7 +116,7 @@ async function generateReceiptPDF(saleId, businessId) {
       doc.fontSize(9).fillColor(lightGray).font('Helvetica');
       doc.text('RECEIPT NO', infoBoxX + 10, infoBoxY + 10);
       doc.fontSize(14).fillColor(primaryColor).font('Helvetica-Bold');
-      doc.text(`#${String(sale.id).padStart(6, '0')}`, infoBoxX + 10, infoBoxY + 22);
+      doc.text(`#${String(sale.display_receipt_number).padStart(6, '0')}`, infoBoxX + 10, infoBoxY + 22);
       
       doc.fontSize(9).fillColor(lightGray).font('Helvetica');
       doc.text('DATE', infoBoxX + 10, infoBoxY + 42);

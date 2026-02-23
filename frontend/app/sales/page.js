@@ -193,7 +193,8 @@ function SalesContent() {
       // Capture receipt and sale ID from response
       if (res.data.receipt) {
         setLastReceipt(res.data.receipt);
-        setLastSaleId(res.data.saleId);
+        // Use receiptNumber (business-specific) instead of saleId (global)
+        setLastSaleId(res.data.receiptNumber);
       }
       
       toast.success(`${saleType === 'retail' ? 'Retail' : 'Wholesale'} sale recorded successfully!`);

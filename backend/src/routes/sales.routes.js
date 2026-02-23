@@ -42,10 +42,17 @@ router.post("/sale", auth, sub, async (req, res) => {
     const debt = Math.max(0, totalAmount - paidAmount);
     const customerName = customer || "Walk-in Customer";
 
-    // Insert sale with sale_type
+    // Generate business-specific receipt number
+    const receiptResult = await db.query(
+      "SELECT COALESCE(MAX(receipt_number), 0) as max_receipt FROM sales WHERE business_id = $1",
+      [req.user.business_id]
+    );
+    const nextReceiptNumber = (parseInt(receiptResult.rows[0].max_receipt) || 0) + 1;
+
+    // Insert sale with sale_type and receipt_number
     const sale = await db.query(
-      "INSERT INTO sales(business_id, total, paid, customer, sale_type) VALUES($1, $2, $3, $4, $5) RETURNING id, created_at",
-      [req.user.business_id, totalAmount, paidAmount, customerName, saleType]
+      "INSERT INTO sales(business_id, total, paid, customer, sale_type, receipt_number) VALUES($1, $2, $3, $4, $5, $6) RETURNING id, created_at",
+      [req.user.business_id, totalAmount, paidAmount, customerName, saleType, nextReceiptNumber]
     );
 
     const saleId = sale.rows[0].id;
@@ -113,6 +120,7 @@ router.post("/sale", auth, sub, async (req, res) => {
     res.json({ 
       message: "Sale recorded", 
       saleId,
+      receiptNumber: nextReceiptNumber,
       saleType,
       receipt: pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null
     });
@@ -138,10 +146,17 @@ router.post("/quick", auth, sub, async (req, res) => {
     const customerName = customer || "Walk-in Customer";
     const saleType = sale_type || 'retail';
 
-    // Insert sale
+    // Generate business-specific receipt number
+    const receiptResult = await db.query(
+      "SELECT COALESCE(MAX(receipt_number), 0) as max_receipt FROM sales WHERE business_id = $1",
+      [req.user.business_id]
+    );
+    const nextReceiptNumber = (parseInt(receiptResult.rows[0].max_receipt) || 0) + 1;
+
+    // Insert sale with receipt_number
     const sale = await db.query(
-      "INSERT INTO sales(business_id, total, paid, customer, sale_type) VALUES($1, $2, $3, $4, $5) RETURNING id, created_at",
-      [req.user.business_id, totalAmount, paidAmount, customerName, saleType]
+      "INSERT INTO sales(business_id, total, paid, customer, sale_type, receipt_number) VALUES($1, $2, $3, $4, $5, $6) RETURNING id, created_at",
+      [req.user.business_id, totalAmount, paidAmount, customerName, saleType, nextReceiptNumber]
     );
 
     const saleId = sale.rows[0].id;
@@ -183,6 +198,7 @@ router.post("/quick", auth, sub, async (req, res) => {
     res.json({ 
       message: "Sale recorded", 
       saleId,
+      receiptNumber: nextReceiptNumber,
       saleType,
       receipt: pdfBase64 ? `data:application/pdf;base64,${pdfBase64}` : null
     });
