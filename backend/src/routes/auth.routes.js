@@ -199,9 +199,9 @@ router.delete("/users/:id", auth, roleAuth("owner"), async (req, res) => {
   }
 });
 
-/* ================= DELETE ACCOUNT (Owner + Business) ================= */
+/* ================= DELETE ACCOUNT (Owner Only) ================= */
 
-router.delete("/account", auth, async (req, res) => {
+router.delete("/account", auth, roleAuth("owner"), async (req, res) => {
   const client = await db.connect();
   
   try {

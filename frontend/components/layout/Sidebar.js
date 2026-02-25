@@ -17,7 +17,8 @@ import {
   UserPlus,
   ChevronRight,
   LogOut,
-  Truck
+  Truck,
+  Database
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -101,6 +102,10 @@ export default function Sidebar() {
         
         {user?.role === "owner" && (
           <NavItem href="/admin/users" icon={UserPlus} label={t('sidebar.manageUsers')} />
+        )}
+        
+        {user?.role === "owner" && (
+          <NavItem href="/db-query" icon={Database} label="Database Query" />
         )}
       </nav>
 

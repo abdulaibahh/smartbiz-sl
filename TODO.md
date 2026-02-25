@@ -1,30 +1,51 @@
-# SmartBiz Multi-Language Implementation Plan
+# Task: Role-based Access Control Implementation
 
-## Task
-Add multiple language selection to display this system (english, french, arabic). Provide a drop down option on the main page to select system language just like in register/login page.
+## Summary:
+Implemented role-based access control to restrict business settings access to owners only, and hide cost prices from cashiers and managers.
 
-## Progress Tracking
+## Completed Changes:
 
-### Completed
-- [x] Analyze existing i18n system (frontend/lib/i18n)
-- [x] Review LanguageContext and LanguageSwitcher components
-- [x] Understand current implementation in login/register pages
-- [x] Plan confirmed by user
+### Backend Changes:
+- [x] **backend/src/routes/business.routes.js**
+  - Added `roleAuth("owner")` middleware to GET, POST (logo), PUT, and DELETE (account) routes
+  - Only owners can view/update business settings, upload logos, or delete accounts
 
-### In Progress
-- [ ] Update Sidebar.js - Add LanguageSwitcher and translate navigation labels
-- [ ] Update Header.js - Translate page titles
+- [x] **backend/src/routes/inventory.routes.js**
+  - GET /all now filters out cost_price for non-owners
+  - POST /supplier-order ignores cost_price when non-owners add/update products
+  - PUT /:id already restricted to owners only
+  - DELETE /:id already restricted to owners only
 
-### Pending
-- [ ] Test the implementation
+- [x] **backend/src/routes/auth.routes.js**
+  - Added `roleAuth("owner")` to DELETE /account endpoint
 
-## Changes Made
+### Frontend Changes:
+- [x] **frontend/components/layout/Sidebar.js**
+  - Added Database Query nav item for owners only
+  - Settings and User Management already restricted to owners
 
-### 1. frontend/components/layout/Sidebar.js
-- Added useLanguage hook import
-- Replaced hardcoded navigation labels with t() translations
-- Added LanguageSwitcher component for language selection
+- [x] **frontend/app/settings/page.js**
+  - Already has owner-only access check with redirect for non-owners
 
-### 2. frontend/components/layout/Header.js
-- Added useLanguage hook import  
-- Updated pageTitles to use t() translations
+- [x] **frontend/app/inventory/page.js**
+  - Already shows/hides cost_price based on user role
+  - Already shows/hides delete buttons based on user role
+  - All users can add/update products but only owners can modify cost prices
+
+- [x] **frontend/app/admin/users/page.js**
+  - Already has owner-only access check with access denied message
+
+## Permissions Matrix:
+| Feature | Owner | Manager | Cashier |
+|---------|-------|---------|---------|
+| View Business Settings | ✅ | ❌ | ❌ |
+| Edit Business Settings | ✅ | ❌ | ❌ |
+| Delete Account | ✅ | ❌ | ❌ |
+| Manage Users | ✅ | ❌ | ❌ |
+| View Cost Prices | ✅ | ❌ | ❌ |
+| Edit Cost Prices | ✅ | ❌ | ❌ |
+| Add Products | ✅ | ✅ | ✅ |
+| Update Products | ✅ | ✅ | ✅ |
+| View Selling Prices | ✅ | ✅ | ✅ |
+| Edit Selling Prices | ✅ | ✅ | ✅ |
+| Delete Products | ✅ | ❌ | ❌ |
