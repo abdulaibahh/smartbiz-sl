@@ -262,7 +262,6 @@ function InventoryContent() {
                 }`}>
                   <Package className={stockType === 'retail' ? 'text-emerald-400' : 'text-blue-400'} size={24} />
                 </div>
-                {isOwner && (
                 <div className="flex gap-1">
                   <button
                     onClick={() => openEditModal(item)}
@@ -270,14 +269,15 @@ function InventoryContent() {
                   >
                     <Edit2 size={18} />
                   </button>
-                  <button
-                    onClick={() => handleDelete(item.id)}
-                    className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
-                  >
-                    <Trash2 size={18} />
-                  </button>
+                  {isOwner && (
+                    <button
+                      onClick={() => handleDelete(item.id)}
+                      className="p-2 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
                 </div>
-                )}
               </div>
               
               <h3 className="text-lg font-semibold text-white mb-1">{item.product}</h3>

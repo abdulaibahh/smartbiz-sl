@@ -234,14 +234,12 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
   
   const { id, product, quantity, cost_price, selling_price, stock_type, retail_quantity, wholesale_quantity, retail_price, wholesale_price } = req.body;
 
-  // If ID is provided, this is an update operation (from edit modal) - Owner only
+  // If ID is provided, this is an update operation (from edit modal)
+  // All users can edit, but only owners can update cost_price
   if (id) {
-    // Only owners can edit existing items
-    if (req.user.role !== 'owner') {
-      return res.status(403).json({ message: "Only owners can edit inventory items" });
-    }
+    const isOwner = req.user.role === 'owner';
     
-    console.log("[INVENTORY] Update operation with ID:", id);
+    console.log("[INVENTORY] Update operation with ID:", id, "isOwner:", isOwner);
     try {
       const updates = [];
       const params = [];
@@ -270,7 +268,8 @@ router.post("/supplier-order", auth, sub, async (req, res) => {
         }
       }
 
-      if (cost_price !== undefined) {
+      // Only owners can update cost_price
+      if (cost_price !== undefined && isOwner) {
         updates.push(`cost_price = $${paramIndex++}`);
         params.push(cost_price);
       }
