@@ -148,6 +148,13 @@ export const ordersAPI = {
   recordPayment: (orderId, data) => API.post(`/api/orders/${orderId}/payment`, data),
 };
 
+// ==================== DATABASE ====================
+export const dbAPI = {
+  executeQuery: (sql) => API.post("/api/db/query", { sql }),
+  getTables: () => API.get("/api/db/tables"),
+  getSchema: (table) => API.get(`/api/db/schema/${table}`),
+};
+
 // Default export for backward compatibility
 export const api = {
   auth: authAPI,

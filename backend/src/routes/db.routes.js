@@ -34,6 +34,90 @@ router.get("/health", async (req, res) => {
   }
 });
 
+// Execute SQL query (Owner only for security)
+router.post("/query", async (req, res) => {
+  try {
+    const { sql } = req.body;
+    
+    if (!sql) {
+      return res.status(400).json({ message: "SQL query required" });
+    }
+    
+    // Basic security check - only SELECT queries allowed
+    const trimmedSql = sql.trim().toUpperCase();
+    if (!trimmedSql.startsWith('SELECT')) {
+      return res.status(400).json({ message: "Only SELECT queries are allowed for security" });
+    }
+    
+    // Prevent dangerous queries
+    if (trimmedSql.includes('DROP') || 
+        trimmedSql.includes('DELETE') || 
+        trimmedSql.includes('INSERT') || 
+        trimmedSql.includes('UPDATE') ||
+        trimmedSql.includes('ALTER') ||
+        trimmedSql.includes('CREATE')) {
+      return res.status(400).json({ message: "Only SELECT queries are allowed for security" });
+    }
+    
+    console.log("[QUERY] Executing:", sql);
+    const result = await db.query(sql);
+    
+    res.json({
+      success: true,
+      rows: result.rows,
+      rowCount: result.rowCount,
+      columns: result.fields ? result.fields.map(f => f.name) : []
+    });
+  } catch (err) {
+    console.error("[QUERY] Error:", err.message);
+    res.status(400).json({ 
+      success: false,
+      message: err.message 
+    });
+  }
+});
+
+// Get table schema
+router.get("/schema/:table", async (req, res) => {
+  try {
+    const { table } = req.params;
+    
+    const result = await db.query(`
+      SELECT column_name, data_type, is_nullable, column_default
+      FROM information_schema.columns
+      WHERE table_name = $1
+      ORDER BY ordinal_position
+    `, [table]);
+    
+    res.json({
+      table,
+      columns: result.rows
+    });
+  } catch (err) {
+    console.error("[SCHEMA] Error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Get all tables
+router.get("/tables", async (req, res) => {
+  try {
+    const result = await db.query(`
+      SELECT table_name 
+      FROM information_schema.tables 
+      WHERE table_schema = 'public'
+      ORDER BY table_name
+    `);
+    
+    res.json({
+      tables: result.rows.map(t => t.table_name)
+    });
+  } catch (err) {
+    console.error("[TABLES] Error:", err);
+    res.status(500).json({ message: err.message });
+  }
+});
+
 // Setup database tables
 router.post("/setup", async (req, res) => {
   try {
